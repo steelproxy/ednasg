@@ -2,6 +2,10 @@ import feedparser
 from openai import OpenAI
 import curses
 import keyring
+import json
+import os
+
+CONFIG_FILE = 'rss_feeds.json'
 
 # Function to display a status bar and input prompt in the same window
 def print_bottom_bar(win, message):
@@ -74,27 +78,69 @@ def display_articles(win, articles):
 
     win.refresh()
 
+def load_or_create_config(win):
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, 'r') as f:
+            return json.load(f)
+    else:
+        # Prompt the user to create a config file
+        print_bottom_bar(win, "No configuration file found. Enter an RSS feed URL to create one: ")
+        new_feed_url = win.getstr().decode('utf-8').strip()
+
+        if new_feed_url:
+            feeds = { "1": new_feed_url }
+            with open(CONFIG_FILE, 'w') as f:
+                json.dump(feeds, f)
+            return feeds
+        else:
+            return {}
+
 def main(stdscr):
     curses.curs_set(1)
     curses.start_color()
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.echo()
     
-    # Create a window for status and input prompt
     height, width = stdscr.getmaxyx()
-    
     message_area_win = curses.newwin(height - 1, width, 0, 0)
     bottom_bar_win = curses.newwin(1, width, height - 1, 0)
-    
+
     stdscr.clear()
     
-    print_bottom_bar(bottom_bar_win, "Enter RSS feed URL: ")
-    rss_url = bottom_bar_win.getstr().decode('utf-8')
+    message_area_win.addstr(0, 0, f"Loading rss config...\n")
+    
+    # Load or create the configuration file
+    feeds = load_or_create_config(bottom_bar_win)
+    
+    if not feeds:
+        message_area_win.addstr(f"No RSS feed URL provided. Exiting.\n")
+        message_area_win.refresh()
+        print_bottom_bar(bottom_bar_win, "Press any button to exit...\n")
+        bottom_bar_win.getch()
+        return
+
+    # Allow user to select from available feeds
+    message_area_win.addstr(f"Available RSS feeds: \n")
+    for key, url in feeds.items():
+        message_area_win.addstr(f"    {key}: {url}\n")
+        message_area_win.refresh()
+    print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: ")
+    
+    selected_option = bottom_bar_win.getstr().decode('utf-8').strip()
+    
+    rss_url = feeds.get(selected_option) if selected_option in feeds else selected_option
+
+    if not rss_url:
+        message_area_win.addstr(f"Invalid feed selection. Exiting.")
+        message_area_win.refresh()
+        print_bottom_bar(bottom_bar_win, "Press any key to exit...")
+        bottom_bar_win.getch()
+        return
 
     api_key = get_api_key(bottom_bar_win)
     client = OpenAI(api_key=api_key)
 
-    print_bottom_bar(bottom_bar_win, "Fetching rss feed...")
+    print_bottom_bar(bottom_bar_win, "Fetching RSS feed...")
     feed = fetch_rss_feed(rss_url)
     articles = [{'title': entry.title, 'summary': entry.summary} for entry in feed.entries]
 
@@ -117,7 +163,7 @@ def main(stdscr):
     message_area_win.refresh()
     
     print_bottom_bar(bottom_bar_win, "Filename to save to (default: news_script.txt): ")
-    filename = bottom_bar_win.getstr().decode('utf-8')
+    filename = bottom_bar_win.getstr().decode('utf-8').strip()
     
     if filename == "":
         filename = "news_script.txt"
