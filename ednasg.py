@@ -1,6 +1,7 @@
 import feedparser
 from openai import OpenAI
 import curses
+import keyring
 
 # Function to display a status bar
 def display_status_bar(win, message):
@@ -25,12 +26,27 @@ def get_chatgpt_script(client, api_key, articles):
     messages.append({"role": "user", "content": prompt})
 
     # Use the optimized GPT-4 model (replace 'gpt-4o' with the exact model name if different)
-    response = client.chat.completions.create(model="gpt-4o",  # Using GPT-4 with optimizations
-    messages=messages,
-    temperature=0.7)
+    response = client.chat.completions.create(
+        model="gpt-4o",  # Using GPT-4 with optimizations
+        messages=messages,
+        temperature=0.7
+    )
 
     # Access the content of the response
     return response.choices[0].message.content.strip()
+
+def get_api_key(stdscr):
+    service_id = "ednasg"
+    key_id = "api_key"
+    
+    api_key = keyring.get_password(service_id, key_id)
+    if not api_key:
+        stdscr.addstr(1, 0, "Enter OpenAI API key: ")
+        stdscr.refresh()
+        api_key = stdscr.getstr().decode('utf-8')
+        keyring.set_password(service_id, key_id, api_key)
+    
+    return api_key
 
 def main(stdscr):
     # Initialize curses
@@ -39,15 +55,14 @@ def main(stdscr):
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.echo()
 
-    # Get RSS feed URL and API key from the user
+    # Get RSS feed URL from the user
     stdscr.clear()
     stdscr.addstr(0, 0, "Enter RSS feed URL: ")
     stdscr.refresh()
     rss_url = stdscr.getstr().decode('utf-8')
 
-    stdscr.addstr(1, 0, "Enter OpenAI API key: ")
-    stdscr.refresh()
-    api_key = stdscr.getstr().decode('utf-8')
+    # Get API key from keyring or prompt user
+    api_key = get_api_key(stdscr)
     client = OpenAI(api_key=api_key)
 
     # Fetch and display RSS feed
@@ -61,7 +76,7 @@ def main(stdscr):
     height, width = stdscr.getmaxyx()
 
     # Calculate maximum number of lines and width for articles
-    max_lines = height - 3 # Leave space for status bar and margins
+    max_lines = height - 3  # Leave space for status bar and margins
     max_width = width - 2   # Leave margins on the sides
 
     # Display articles
@@ -73,7 +88,7 @@ def main(stdscr):
 
         title = article['title']
 
-        # Truncate title and summary to fit within the available width
+        # Truncate title to fit within the available width
         if len(title) > max_width:
             title = title[:max_width - 3] + "..."
 
