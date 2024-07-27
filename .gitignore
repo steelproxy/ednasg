@@ -162,3 +162,4 @@ cython_debug/
 #.idea/
 news_script.txt
 .DS_Store
+test.txt

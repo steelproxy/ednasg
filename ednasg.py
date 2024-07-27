@@ -3,13 +3,17 @@ from openai import OpenAI
 import curses
 import keyring
 
-# Function to display a status bar
-def display_status_bar(win, message):
+# Function to display a status bar and input prompt in the same window
+def print_bottom_bar(win, message):
     height, width = win.getmaxyx()
-    status_bar = curses.newwin(1, width, height - 1, 0)
-    status_bar.bkgd(' ', curses.color_pair(1))
-    status_bar.addstr(0, 0, message, curses.color_pair(1))
-    status_bar.refresh()
+    win.bkgd(' ', curses.color_pair(1))
+    
+    win.clear()
+    
+    # Display status message
+    win.addstr(0, 0, message, curses.color_pair(1))
+    
+    win.refresh()
 
 def fetch_rss_feed(url):
     return feedparser.parse(url)
@@ -25,62 +29,33 @@ def get_chatgpt_script(client, api_key, articles):
 
     messages.append({"role": "user", "content": prompt})
 
-    # Use the optimized GPT-4 model (replace 'gpt-4o' with the exact model name if different)
     response = client.chat.completions.create(
-        model="gpt-4o",  # Using GPT-4 with optimizations
+        model="gpt-4o",
         messages=messages,
         temperature=0.7
     )
 
-    # Access the content of the response
     return response.choices[0].message.content.strip()
 
-def get_api_key(stdscr):
+def get_api_key(win):
     service_id = "ednasg"
     key_id = "api_key"
     
     api_key = keyring.get_password(service_id, key_id)
     if not api_key:
-        stdscr.addstr(1, 0, "Enter OpenAI API key: ")
-        stdscr.refresh()
-        api_key = stdscr.getstr().decode('utf-8')
+        print_bottom_bar(win, "Enter OpenAI API Key: ")
+        api_key = win.getstr().decode('utf-8')
         keyring.set_password(service_id, key_id, api_key)
     
     return api_key
 
-def main(stdscr):
-    # Initialize curses
-    curses.curs_set(0)
-    curses.start_color()
-    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    curses.echo()
+def display_articles(win, articles):
+    win.clear()
+    height, width = win.getmaxyx()
+    max_lines = height - 2  # Reserve space for status bar and input prompt
+    max_width = width - 2
 
-    # Get RSS feed URL from the user
-    stdscr.clear()
-    stdscr.addstr(0, 0, "Enter RSS feed URL: ")
-    stdscr.refresh()
-    rss_url = stdscr.getstr().decode('utf-8')
-
-    # Get API key from keyring or prompt user
-    api_key = get_api_key(stdscr)
-    client = OpenAI(api_key=api_key)
-
-    # Fetch and display RSS feed
-    feed = fetch_rss_feed(rss_url)
-    articles = [{'title': entry.title, 'summary': entry.summary} for entry in feed.entries]
-
-    stdscr.clear()
-    display_status_bar(stdscr, "Fetching RSS feed and preparing article list...")
-
-    # Get terminal dimensions
-    height, width = stdscr.getmaxyx()
-
-    # Calculate maximum number of lines and width for articles
-    max_lines = height - 3  # Leave space for status bar and margins
-    max_width = width - 2   # Leave margins on the sides
-
-    # Display articles
-    stdscr.addstr(0, 0, "Available Articles:")
+    win.addstr(0, 0, "Available Articles:")
     line_number = 1
     for idx, article in enumerate(articles):
         if line_number >= max_lines:
@@ -88,37 +63,73 @@ def main(stdscr):
 
         title = article['title']
 
-        # Truncate title to fit within the available width
         if len(title) > max_width:
             title = title[:max_width - 3] + "..."
 
         try:
-            stdscr.addstr(line_number, 0, f"{idx + 1}. {title[:max_width]}")
+            win.addstr(line_number, 0, f"{idx + 1}. {title[:max_width]}")
             line_number += 1
         except curses.error:
             pass
 
-    stdscr.addstr(line_number + 2, 0, "Enter the numbers of articles to include (comma-separated): ")
-    stdscr.refresh()
+    win.refresh()
 
-    # Get user's choice
-    choices = stdscr.getstr().decode('utf-8')
+def main(stdscr):
+    curses.curs_set(1)
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    curses.echo()
+    
+    # Create a window for status and input prompt
+    height, width = stdscr.getmaxyx()
+    
+    message_area_win = curses.newwin(height - 1, width, 0, 0)
+    bottom_bar_win = curses.newwin(1, width, height - 1, 0)
+    
+    stdscr.clear()
+    
+    print_bottom_bar(bottom_bar_win, "Enter RSS feed URL: ")
+    rss_url = bottom_bar_win.getstr().decode('utf-8')
+
+    api_key = get_api_key(bottom_bar_win)
+    client = OpenAI(api_key=api_key)
+
+    print_bottom_bar(bottom_bar_win, "Fetching rss feed...")
+    feed = fetch_rss_feed(rss_url)
+    articles = [{'title': entry.title, 'summary': entry.summary} for entry in feed.entries]
+
+    display_articles(message_area_win, articles)
+
+    # Display the prompt in the same location as the status bar
+    print_bottom_bar(bottom_bar_win, "Enter the numbers of articles to include (comma-separated): ")
+
+    # Get user's input for article selection
+    choices = bottom_bar_win.getstr().decode('utf-8')
     selected_indices = [int(num.strip()) - 1 for num in choices.split(',') if num.strip().isdigit()]
     selected_articles = [articles[i] for i in selected_indices]
 
-    # Generate script with ChatGPT
-    display_status_bar(stdscr, "Generating news anchor script...")
+    print_bottom_bar(bottom_bar_win, "Generating news anchor script...")
+
     script = get_chatgpt_script(client, api_key, selected_articles)
 
-    # Save script to files
-    file_name = "news_script.txt"
-    with open(file_name, 'w') as f:
+    message_area_win.clear()
+    message_area_win.addstr(0, 0, f"News script successfully generated!")
+    message_area_win.refresh()
+    
+    print_bottom_bar(bottom_bar_win, "Filename to save to (default: news_script.txt): ")
+    filename = bottom_bar_win.getstr().decode('utf-8')
+    
+    if filename == "":
+        filename = "news_script.txt"
+   
+    with open(filename, 'w') as f:
         f.write(script)
-
-    stdscr.clear()
-    stdscr.addstr(0, 0, f"News script saved to {file_name}")
-    stdscr.refresh()
-    stdscr.getch()
+        
+    message_area_win.addstr(1, 0, f"Script written to file: {filename}")
+    message_area_win.refresh()
+    
+    print_bottom_bar(bottom_bar_win, "Press any button to exit...")
+    message_area_win.getch()
 
 if __name__ == "__main__":
     curses.wrapper(main)
