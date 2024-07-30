@@ -10,10 +10,25 @@ import time
 CONFIG_FILE = 'rss_feeds.json'
 
 def print_bottom_bar(win, message):
-    """Display a status bar and input prompt in the given window."""
+    """Display a status bar and input prompt in the given window, respecting screen width."""
+    # Clear the window
     win.clear()
+    
+    # Get the width of the window
+    height, width = win.getmaxyx()
+    
+    # Set the background color for the status bar
     win.bkgd(' ', curses.color_pair(1))
-    win.addstr(0, 0, message)
+    
+    # Prepare the message
+    if len(message) > width - 2:
+        # Truncate the message if it exceeds the window width
+        message = message[:width - 4] + '...'
+    
+    # Add the message to the window
+    win.addstr(0, 0, message)  # Add padding for the border
+    
+    # Refresh the window to update the display
     win.refresh()
 
 
@@ -163,6 +178,7 @@ def update_config(url, nickname):
     except Exception as e:
         # Handle any exceptions that occur during file operations
         print(f"Error updating configuration: {e}")
+    return feeds
 
 def setup_windows(stdscr):
     term_height, term_width = stdscr.getmaxyx()
@@ -171,26 +187,45 @@ def setup_windows(stdscr):
     bottom_bar_win.keypad(1)
     return message_area_win, bottom_bar_win
 
-def get_rss_url(stdscr, bottom_bar_win, message_area_win, feeds):
-    """Prompt the user for a feed number or a new URL until a valid selection is provided."""
+def get_rss_urls(stdscr, bottom_bar_win, message_area_win, feeds):
+    """Prompt the user to input one or multiple new RSS feed URLs."""
     
     def is_valid_url(url):
         """Basic URL validation using regex."""
         return re.match(r'^(https?|ftp)://[^\s/$.?#].[^\s]*$', url) is not None
 
-    while True:   
-        print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: ")   
+    def add_feeds(feeds, urls):
+        """Add multiple feeds to the configuration."""
+        for url in urls:
+            url = url.strip()
+            if is_valid_url(url):
+                # Check if URL is already in the config
+                if not any(feed['url'] == url for feed in feeds.values()):
+                    print_bottom_bar(bottom_bar_win, f"Enter a nickname for the new feed '{url}': ")
+                    while not (nickname := bottom_bar_win.getstr().decode('utf-8').strip()):
+                        print_bottom_bar(bottom_bar_win, "Invalid nickname. Press any key to continue...")
+                        bottom_bar_win.getch()
+                        print_bottom_bar(bottom_bar_win, f"Enter a nickname for the new feed '{url}': ")
+                    feeds = update_config(url, nickname)
+                else:
+                    print_bottom_bar(bottom_bar_win, f"Feed URL '{url}' already exists. Skipping...")
+            else:
+                print_bottom_bar(bottom_bar_win, f"Invalid URL '{url}'. Skipping...")
+            time.sleep(0.1)  # Short delay to prevent rapid input issues
+        return feeds
+    
+    while True:
+        print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: ")
         
-        # Display available RSS feeds with scrolling
         feed_scroll_idx = 0
         selected_option = ""
-        while True:   
+        while True:
             display_feeds(message_area_win, feeds, feed_scroll_idx)
             
             ch = bottom_bar_win.getch()
-            print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: " + selected_option)
+            print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: " + selected_option)
             
-            if ch == curses.KEY_DOWN and feed_scroll_idx < len(feeds.items()):
+            if ch == curses.KEY_DOWN and feed_scroll_idx < len(feeds.items()) - 1:
                 feed_scroll_idx += 1
             elif ch == curses.KEY_UP and feed_scroll_idx > 0:
                 feed_scroll_idx -= 1
@@ -198,38 +233,32 @@ def get_rss_url(stdscr, bottom_bar_win, message_area_win, feeds):
                 break
             elif ch == 127:  # Backspace key
                 selected_option = selected_option[:-1]
-                print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: " + selected_option)
+                print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: " + selected_option)
             elif ch == curses.KEY_RESIZE:
                 # Resize handling
                 stdscr.clear()
                 stdscr.refresh()
-                message_area_win, bottom_bar_win = setup_windows()
+                message_area_win, bottom_bar_win = setup_windows(stdscr)
                 feed_scroll_idx = 0
-                print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: " + selected_option)
+                print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: " + selected_option)
             elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'):
                 selected_option += chr(ch)
-                print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: " + selected_option)
-                
+                print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: " + selected_option)
         
         if selected_option.isdigit() and selected_option in feeds:
             # Valid feed number
             return feeds[selected_option]['url']
         
-        elif selected_option and is_valid_url(selected_option):
-            # Valid URL
-            print_bottom_bar(bottom_bar_win, "Enter a nickname for the new feed: ")
-            while not (nickname := bottom_bar_win.getstr().decode('utf-8').strip()):
-                print_bottom_bar(bottom_bar_win, "Invalid nickname. Press any key to continue...")
-                bottom_bar_win.getch()
-                print_bottom_bar(bottom_bar_win, "Enter a nickname for the new feed: ")
-            
-            update_config(selected_option, nickname)
-            return selected_option
+        elif selected_option:
+            # Either a single URL or multiple URLs
+            urls = [url.strip() for url in selected_option.split(',')]
+            feeds = add_feeds(feeds, urls)
         
         else:
             # Prompt the user again if the input is invalid
             print_bottom_bar(bottom_bar_win, "Invalid selection. Press any key to continue...")
             bottom_bar_win.getch()
+
 
 def setup_curses(stdscr):
     """Initialize curses settings."""
@@ -243,7 +272,7 @@ def setup_curses(stdscr):
 def main(stdscr):
     # setup windows
     setup_curses(stdscr)
-    message_area_win, bottom_bar_win = setup_windows()
+    message_area_win, bottom_bar_win = setup_windows(stdscr)
     
     # get credentials and connect to API
     message_area_win.addstr("Finding API key...\n")
@@ -261,7 +290,7 @@ def main(stdscr):
         message_area_win.refresh()
 
     # get selected option
-    rss_url = get_rss_url(stdscr, bottom_bar_win, message_area_win, feeds)
+    rss_url = get_rss_urls(stdscr, bottom_bar_win, message_area_win, feeds)
 
     # get articles from rss
     print_bottom_bar(bottom_bar_win, "Fetching RSS feed...")
