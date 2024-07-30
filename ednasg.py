@@ -9,6 +9,8 @@ import time
 
 CONFIG_FILE = 'rss_feeds.json'
 
+## TODO add options to delete feeds
+
 def print_bottom_bar(win, message):
     """Display a status bar with a message."""
     win.clear()
@@ -412,7 +414,7 @@ def main(stdscr):
         f.write(script)
         
     message_area_win.clear()
-    message_area_win.addstr(1, 0, f"Script written to file: {filename}")
+    message_area_win.addstr(f"Script written to file: {filename}")
     message_area_win.refresh()
     
     print_bottom_bar(bottom_bar_win, "Press any button to exit...")
