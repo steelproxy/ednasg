@@ -11,14 +11,21 @@ CONFIG_FILE = 'rss_feeds.json'
 
 # Function to display a status bar and input prompt in the same window
 def print_bottom_bar(win, message):
-    win.bkgd(' ', curses.color_pair(1))
     win.clear()
+    win.bkgd(' ', curses.color_pair(1))
     
     # Display status message
-    win.addstr(0, 0, message, curses.color_pair(1))
+    win.addstr(0, 0, message)
     win.refresh()
 
 def get_chatgpt_script(client, articles):
+    # Error checking for 'articles'
+    if not isinstance(articles, list):
+        raise ValueError("Expected 'articles' to be a list")
+    for article in articles:
+        if not isinstance(article, dict) or 'title' not in article or 'summary' not in article:
+            raise ValueError("Each article should be a dictionary with 'title' and 'summary' keys")
+
     messages = [
         {"role": "system", "content": "You are a helpful assistant that writes news anchor scripts."}
     ]
@@ -33,6 +40,12 @@ def get_chatgpt_script(client, articles):
         messages=messages,
         temperature=0.7
     )
+
+    # Error checking for 'response'
+    if not hasattr(response, 'choices') or not response.choices:
+        raise ValueError("API response does not contain 'choices'")
+    if not hasattr(response.choices[0], 'message') or not hasattr(response.choices[0].message, 'content'):
+        raise ValueError("API response does not contain expected content")
 
     return response.choices[0].message.content.strip()
 
@@ -79,7 +92,7 @@ def display_articles(win, articles, start_idx):
 def display_feeds(win, feeds, start_idx):
     height, width = win.getmaxyx()
     max_lines = height - 1  # Reserve space for status bar and input prompt
-    max_width = width - 2
+    max_width = width - 2 # side margins
 
     win.clear()
     win.addstr(0, 0, "Available RSS Feeds:")
@@ -154,25 +167,38 @@ def update_config(url, nickname):
         # Handle any exceptions that occur during file operations
         print(f"Error updating configuration: {e}")
 
-def get_rss_url(bottom_bar_win, message_area_win, height, feeds):
+def get_rss_url(stdscr, bottom_bar_win, message_area_win, feeds):
     """Prompt the user for a feed number or a new URL until a valid selection is provided."""
     
     def is_valid_url(url):
         """Basic URL validation using regex."""
         return re.match(r'^(https?|ftp)://[^\s/$.?#].[^\s]*$', url) is not None
+    
+    # setup windows
+    def setup_windows():
+        term_height, term_width = stdscr.getmaxyx()
+        message_area_win = curses.newwin(term_height - 1, term_width, 0, 0)
+        bottom_bar_win = curses.newwin(1, term_width, term_height - 1, 0)
+        bottom_bar_win.keypad(1)
+        return message_area_win, bottom_bar_win
 
     while True:
-        print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: ")
+        
+        height, width = message_area_win.getmaxyx()
+           
+        print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: ")   
         
         # Display available RSS feeds with scrolling
         feed_scroll_idx = 0
         selected_option = ""
         while True:
+            height, width = message_area_win.getmaxyx()           
             display_feeds(message_area_win, feeds, feed_scroll_idx)
             
             ch = bottom_bar_win.getch()
+            print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: " + selected_option)
             
-            if ch == curses.KEY_DOWN and feed_scroll_idx < len(feeds.items()) - (height - 4):
+            if ch == curses.KEY_DOWN and feed_scroll_idx < len(feeds.items()):
                 feed_scroll_idx += 1
             elif ch == curses.KEY_UP and feed_scroll_idx > 0:
                 feed_scroll_idx -= 1
@@ -180,10 +206,17 @@ def get_rss_url(bottom_bar_win, message_area_win, height, feeds):
                 break
             elif ch == 127:  # Backspace key
                 selected_option = selected_option[:-1]
-                print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: ")
-                bottom_bar_win.addstr(selected_option)
+                print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: " + selected_option)
+            elif ch == curses.KEY_RESIZE:
+                # Resize handling
+                stdscr.clear()
+                stdscr.refresh()
+                message_area_win, bottom_bar_win = setup_windows()
+                feed_scroll_idx = 0
+                print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: " + selected_option)
             elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'):
                 selected_option += chr(ch)
+                print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: " + selected_option)
                 
         
         if selected_option.isdigit() and selected_option in feeds:
@@ -215,11 +248,17 @@ def main(stdscr):
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
     stdscr.clear()
 
-    # setup windows
     term_height, term_width = stdscr.getmaxyx()
-    message_area_win = curses.newwin(term_height - 1, term_width, 0, 0)
-    bottom_bar_win = curses.newwin(1, term_width, term_height - 1, 0)
-    bottom_bar_win.keypad(1)
+
+    # setup windows
+    def setup_windows():
+        term_height, term_width = stdscr.getmaxyx()
+        message_area_win = curses.newwin(term_height - 1, term_width, 0, 0)
+        bottom_bar_win = curses.newwin(1, term_width, term_height - 1, 0)
+        bottom_bar_win.keypad(1)
+        return message_area_win, bottom_bar_win
+    
+    message_area_win, bottom_bar_win = setup_windows()
     
     # get credentials and connect to API
     message_area_win.addstr("Finding API key...\n")
@@ -237,7 +276,7 @@ def main(stdscr):
         message_area_win.refresh()
 
     # get selected option
-    rss_url = get_rss_url(bottom_bar_win, message_area_win, term_height, feeds)
+    rss_url = get_rss_url(stdscr, bottom_bar_win, message_area_win, feeds)
 
     # get articles from rss
     print_bottom_bar(bottom_bar_win, "Fetching RSS feed...")
@@ -251,22 +290,27 @@ def main(stdscr):
     choices = ""
     while True:
         display_articles(message_area_win, articles, article_scroll_idx)
+        print_bottom_bar(bottom_bar_win, "Enter the numbers of articles to include (comma-separated): " + choices)
         
         ch = bottom_bar_win.getch()
         
-        if ch == curses.KEY_DOWN and article_scroll_idx < len(articles) - (term_height - 4):
+        if ch == curses.KEY_DOWN and article_scroll_idx < len(articles):
             article_scroll_idx += 1
         elif ch == curses.KEY_UP and article_scroll_idx > 0:
             article_scroll_idx -= 1
         elif ch == 127:  # Backspace key
             choices = choices[:-1]
-            print_bottom_bar(bottom_bar_win, "Enter the numbers of articles to include (comma-separated): ")
-            bottom_bar_win.addstr(choices)
         elif ch == ord('\n'):
             break
+        elif ch == curses.KEY_RESIZE:
+            # Resize handling
+            stdscr.clear()
+            stdscr.refresh()
+            message_area_win, bottom_bar_win = setup_windows()
+            article_scroll_idx = 0
         elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'):
             choices += chr(ch)
-            
+
 
     # Get user's input for article selection
     selected_indices = [int(num.strip()) - 1 for num in choices.split(',') if num.strip().isdigit()]
