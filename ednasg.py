@@ -31,8 +31,13 @@ def print_bottom_bar(win, message):
     # Refresh the window to update the display
     win.refresh()
 
+def get_custom_prompt(win):
+    """Prompt the user to enter a custom ChatGPT prompt."""
+    print_bottom_bar(win, "Enter custom prompt for ChatGPT (leave empty for default): ")
+    prompt = win.getstr().decode('utf-8').strip()
+    return prompt
 
-def get_chatgpt_script(client, articles):
+def get_chatgpt_script(client, articles, custom_prompt):
     """Generate a news anchor script using ChatGPT based on the provided articles."""
     # Error checking for 'articles'
     if not isinstance(articles, list):
@@ -41,9 +46,13 @@ def get_chatgpt_script(client, articles):
         if not isinstance(article, dict) or 'title' not in article or 'summary' not in article:
             raise ValueError("Each article should be a dictionary with 'title' and 'summary' keys")
 
+    if not custom_prompt:
+        custom_prompt = "Create a 99-second news anchor script for the following articles:"
+
     messages = [
         {"role": "system", "content": "You are a helpful assistant that writes news anchor scripts."},
-        {"role": "user", "content": "Create a 99-second news anchor script for the following articles:\n\n" +
+        #{"role": "user", "content": "Create a 99-second news anchor script for the following articles:\n\n" +
+        {"role": "user", "content": f"{custom_prompt}\n\n" +
          "\n".join(f"- {article['title']}: {article['summary']}" for article in articles)}
     ]
     
@@ -269,6 +278,22 @@ def setup_curses(stdscr):
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
     stdscr.clear()
 
+def display_script(message_win, script, start_idx=0):
+    """Display the script in a scrollable manner."""
+    height, width = message_win.getmaxyx()
+    max_lines = height - 1  # Reserve space for status bar
+    lines = script.split('\n')
+
+    # Calculate the range of lines to display
+    end_idx = min(start_idx + max_lines, len(lines))
+
+    # Clear the window and display the lines
+    message_win.clear()
+    for i in range(start_idx, end_idx):
+        message_win.addstr(i - start_idx, 0, lines[i])
+    
+    message_win.refresh()
+
 def main(stdscr):
     # setup windows
     setup_curses(stdscr)
@@ -292,14 +317,18 @@ def main(stdscr):
     # get selected option
     rss_url = get_rss_urls(stdscr, bottom_bar_win, message_area_win, feeds)
 
+    # Display articles with arrow key scrolling
+    # Resize handling
+    stdscr.clear()
+    stdscr.refresh()
+    message_area_win, bottom_bar_win = setup_windows(stdscr)
+    
     # get articles from rss
     print_bottom_bar(bottom_bar_win, "Fetching RSS feed...")
     feed = feedparser.parse(rss_url)
     articles = [{'date': entry.updated_parsed, 'title': entry.title, 'summary': entry.summary} for entry in feed.entries]
-
     print_bottom_bar(bottom_bar_win, "Enter the numbers of articles to include (comma-separated): ")
-
-    # Display articles with arrow key scrolling
+    
     article_scroll_idx = 0
     choices = ""
     while True:
@@ -320,7 +349,7 @@ def main(stdscr):
             # Resize handling
             stdscr.clear()
             stdscr.refresh()
-            message_area_win, bottom_bar_win = setup_windows()
+            message_area_win, bottom_bar_win = setup_windows(stdscr)
             article_scroll_idx = 0
         elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'):
             choices += chr(ch)
@@ -330,13 +359,33 @@ def main(stdscr):
     selected_indices = [int(num.strip()) - 1 for num in choices.split(',') if num.strip().isdigit()]
     selected_articles = [articles[i] for i in selected_indices]
 
+    # Get custom prompt
+    custom_prompt = get_custom_prompt(bottom_bar_win)
+
     print_bottom_bar(bottom_bar_win, "Generating news anchor script...")
 
-    script = get_chatgpt_script(client, selected_articles)
+    script = get_chatgpt_script(client, selected_articles, custom_prompt)
 
-    message_area_win.clear()
-    message_area_win.addstr(0, 0, "News script successfully generated!")
-    message_area_win.refresh()
+    print_bottom_bar(bottom_bar_win, "Use UP/DOWN keys to scroll, 'q' to quit.")
+# Display the script in a scrollable manner
+    script_scroll_idx = 0
+    while True:
+        display_script(message_area_win, script, script_scroll_idx)
+        
+        ch = bottom_bar_win.getch()
+        
+        if ch == curses.KEY_DOWN and script_scroll_idx < len(script.split('\n')) - 1:
+            script_scroll_idx += 1
+        elif ch == curses.KEY_UP and script_scroll_idx > 0:
+            script_scroll_idx -= 1
+        elif ch == ord('q'):
+            break
+        elif ch == curses.KEY_RESIZE:
+            # Resize handling
+            stdscr.clear()
+            stdscr.refresh()
+            message_area_win, bottom_bar_win = setup_windows(stdscr)
+            script_scroll_idx = 0
     
     print_bottom_bar(bottom_bar_win, "Filename to save to (default: news_script.txt): ")
     filename = bottom_bar_win.getstr().decode('utf-8').strip()
@@ -347,6 +396,7 @@ def main(stdscr):
     with open(filename, 'w') as f:
         f.write(script)
         
+    message_area_win.clear()
     message_area_win.addstr(1, 0, f"Script written to file: {filename}")
     message_area_win.refresh()
     
