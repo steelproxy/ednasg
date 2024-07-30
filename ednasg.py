@@ -10,32 +10,19 @@ import time
 CONFIG_FILE = 'rss_feeds.json'
 
 def print_bottom_bar(win, message):
-    """Display a status bar and input prompt in the given window, respecting screen width."""
-    # Clear the window
+    """Display a status bar with a message."""
     win.clear()
-    
-    # Get the width of the window
     height, width = win.getmaxyx()
-    
-    # Set the background color for the status bar
     win.bkgd(' ', curses.color_pair(1))
-    
-    # Prepare the message
-    if len(message) > width - 2:
-        # Truncate the message if it exceeds the window width
+    if len(message) > width - 2:  # Truncate message
         message = message[:width - 4] + '...'
-    
-    # Add the message to the window
-    win.addstr(0, 0, message)  # Add padding for the border
-    
-    # Refresh the window to update the display
+    win.addstr(0, 0, message)
     win.refresh()
 
 def get_custom_prompt(win):
     """Prompt the user to enter a custom ChatGPT prompt."""
     print_bottom_bar(win, "Enter custom prompt for ChatGPT (leave empty for default): ")
-    prompt = win.getstr().decode('utf-8').strip()
-    return prompt
+    return win.getstr().decode('utf-8').strip()
 
 def get_chatgpt_script(client, articles, custom_prompt):
     """Generate a news anchor script using ChatGPT based on the provided articles."""
@@ -51,7 +38,6 @@ def get_chatgpt_script(client, articles, custom_prompt):
 
     messages = [
         {"role": "system", "content": "You are a helpful assistant that writes news anchor scripts."},
-        #{"role": "user", "content": "Create a 99-second news anchor script for the following articles:\n\n" +
         {"role": "user", "content": f"{custom_prompt}\n\n" +
          "\n".join(f"- {article['title']}: {article['summary']}" for article in articles)}
     ]
@@ -72,10 +58,12 @@ def get_chatgpt_script(client, articles, custom_prompt):
 
 def get_api_key(win):
     """Fetch the OpenAI API key from the system keyring or prompt the user to enter it."""
+    # keyring request
     service_id = "ednasg"
     key_id = "api_key"
     api_key = keyring.get_password(service_id, key_id)
     
+    # get key if nonexistent
     while not api_key:
         print_bottom_bar(win, "Enter OpenAI API Key: ")
         api_key = win.getstr().decode('utf-8')
@@ -93,11 +81,13 @@ def display_articles(win, articles, start_idx):
     win.addstr(0, 0, "Available Articles:")
     line_number = 1
     for idx in range(start_idx, min(start_idx + max_lines - 1, len(articles))):
+        # get article info
         article = articles[idx]
         title = article['title']
         date = article['date']
         date_str = time.strftime("%m,%d,%y", date)
 
+        # truncate title
         if len(title) > max_width:
             title = title[:max_width - 3] + "..."
 
@@ -113,16 +103,18 @@ def display_feeds(win, feeds, start_idx):
     """Display a paginated list of RSS feeds in the window."""
     height, width = win.getmaxyx()
     max_lines = height - 1  # Reserve space for status bar and input prompt
-    max_width = width - 2 # side margins
+    max_width = width - 2  # Side margins
 
     win.clear()
     win.addstr(0, 0, "Available RSS Feeds:")
     line_number = 1
     for idx in range(start_idx, min(start_idx + max_lines - 1, len(feeds.items()))):
+        # get feed info
         key, details = list(feeds.items())[idx]
         nickname = details['nickname']
         url = details['url']
         
+        # truncate feed
         if len(nickname) > max_width:
             nickname = nickname[:max_width - 3] + "..."
 
@@ -162,8 +154,8 @@ def load_or_create_config(win):
 
     return feeds
 
-# Function to save configuration file
 def update_config(url, nickname):
+    """Update the configuration file with a new URL and nickname."""
     try:
         if os.path.exists(CONFIG_FILE):
             with open(CONFIG_FILE, 'r') as f:
@@ -190,6 +182,7 @@ def update_config(url, nickname):
     return feeds
 
 def setup_windows(stdscr):
+    """Initialize the curses windows."""
     term_height, term_width = stdscr.getmaxyx()
     message_area_win = curses.newwin(term_height - 1, term_width, 0, 0)
     bottom_bar_win = curses.newwin(1, term_width, term_height - 1, 0)
@@ -234,23 +227,23 @@ def get_rss_urls(stdscr, bottom_bar_win, message_area_win, feeds):
             ch = bottom_bar_win.getch()
             print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: " + selected_option)
             
-            if ch == curses.KEY_DOWN and feed_scroll_idx < len(feeds.items()) - 1:
+            if ch == curses.KEY_DOWN and feed_scroll_idx < len(feeds.items()) - 1: # scroll down
                 feed_scroll_idx += 1
-            elif ch == curses.KEY_UP and feed_scroll_idx > 0:
+            elif ch == curses.KEY_UP and feed_scroll_idx > 0: # scroll up
                 feed_scroll_idx -= 1
-            elif ch == ord('\n'):
+            elif ch == ord('\n'): # newline
                 break
             elif ch == 127:  # Backspace key
                 selected_option = selected_option[:-1]
                 print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: " + selected_option)
-            elif ch == curses.KEY_RESIZE:
+            elif ch == curses.KEY_RESIZE: # resize
                 # Resize handling
                 stdscr.clear()
                 stdscr.refresh()
                 message_area_win, bottom_bar_win = setup_windows(stdscr)
                 feed_scroll_idx = 0
                 print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: " + selected_option)
-            elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'):
+            elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'): # valid character
                 selected_option += chr(ch)
                 print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: " + selected_option)
         
@@ -267,7 +260,6 @@ def get_rss_urls(stdscr, bottom_bar_win, message_area_win, feeds):
             # Prompt the user again if the input is invalid
             print_bottom_bar(bottom_bar_win, "Invalid selection. Press any key to continue...")
             bottom_bar_win.getch()
-
 
 def setup_curses(stdscr):
     """Initialize curses settings."""
@@ -295,11 +287,11 @@ def display_script(message_win, script, start_idx=0):
     message_win.refresh()
 
 def main(stdscr):
-    # setup windows
+    # Setup windows
     setup_curses(stdscr)
     message_area_win, bottom_bar_win = setup_windows(stdscr)
     
-    # get credentials and connect to API
+    # Get credentials and connect to API
     message_area_win.addstr("Finding API key...\n")
     api_key = get_api_key(bottom_bar_win)
     message_area_win.addstr(f"API KEY: {'*' * len(api_key)}\n")
@@ -309,24 +301,51 @@ def main(stdscr):
     message_area_win.addstr("Loading RSS config...\n")
     feeds = load_or_create_config(bottom_bar_win)
     
-    # Print error if feed list doesn't exist.
+    # Print error if feed list doesn't exist
     if not feeds:
         message_area_win.addstr("No RSS config loaded!\n")
         message_area_win.refresh()
 
-    # get selected option
+    # Get selected option
     rss_url = get_rss_urls(stdscr, bottom_bar_win, message_area_win, feeds)
 
-    # Display articles with arrow key scrolling
-    # Resize handling
+    # refresh window info if resize occurred in get_rss_urls
     stdscr.clear()
     stdscr.refresh()
     message_area_win, bottom_bar_win = setup_windows(stdscr)
     
-    # get articles from rss
+    # Get articles from RSS
     print_bottom_bar(bottom_bar_win, "Fetching RSS feed...")
-    feed = feedparser.parse(rss_url)
-    articles = [{'date': entry.updated_parsed, 'title': entry.title, 'summary': entry.summary} for entry in feed.entries]
+    try:
+        feed = feedparser.parse(rss_url)
+        
+        # Check for feed parsing errors
+        if feed.bozo:
+            message_area_win.addstr("Error parsing RSS feed. The feed may be invalid or improperly formatted.\n")
+            message_area_win.refresh()
+            print_bottom_bar(bottom_bar_win, "Press any key to exit...")
+            bottom_bar_win.getch()
+            return 1
+
+        # Extract articles from feed
+        articles = [{'date': entry.updated_parsed, 'title': entry.title, 'summary': entry.summary} for entry in feed.entries]
+        
+        # Ensure there are articles in the feed
+        if not articles:
+            message_area_win.addstr("No articles found in the RSS feed.\n")
+            message_area_win.refresh()
+            print_bottom_bar(bottom_bar_win, "Press any key to exit...")
+            bottom_bar_win.getch()
+            return 1
+
+    except Exception as e:
+        # Handle different types of exceptions (e.g., network errors, URL errors)
+        message_area_win.addstr(f"Error fetching RSS feed: {e}.")
+        message_area_win.refresh()
+        print_bottom_bar(bottom_bar_win, "Press any key to exit...")
+        bottom_bar_win.getch()  # Wait for user input before proceeding
+        return  1 # Exit or handle the error as needed
+
     print_bottom_bar(bottom_bar_win, "Enter the numbers of articles to include (comma-separated): ")
     
     article_scroll_idx = 0
@@ -337,7 +356,7 @@ def main(stdscr):
         
         ch = bottom_bar_win.getch()
         
-        if ch == curses.KEY_DOWN and article_scroll_idx < len(articles):
+        if ch == curses.KEY_DOWN and article_scroll_idx < len(articles) - 1:
             article_scroll_idx += 1
         elif ch == curses.KEY_UP and article_scroll_idx > 0:
             article_scroll_idx -= 1
@@ -354,26 +373,22 @@ def main(stdscr):
         elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'):
             choices += chr(ch)
 
-
     # Get user's input for article selection
     selected_indices = [int(num.strip()) - 1 for num in choices.split(',') if num.strip().isdigit()]
     selected_articles = [articles[i] for i in selected_indices]
 
     # Get custom prompt
     custom_prompt = get_custom_prompt(bottom_bar_win)
-
     print_bottom_bar(bottom_bar_win, "Generating news anchor script...")
-
     script = get_chatgpt_script(client, selected_articles, custom_prompt)
-
     print_bottom_bar(bottom_bar_win, "Use UP/DOWN keys to scroll, 'q' to quit.")
-# Display the script in a scrollable manner
+    
+    # Display the script in a scrollable manner
     script_scroll_idx = 0
     while True:
         display_script(message_area_win, script, script_scroll_idx)
         
         ch = bottom_bar_win.getch()
-        
         if ch == curses.KEY_DOWN and script_scroll_idx < len(script.split('\n')) - 1:
             script_scroll_idx += 1
         elif ch == curses.KEY_UP and script_scroll_idx > 0:
