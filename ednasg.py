@@ -9,16 +9,16 @@ import time
 
 CONFIG_FILE = 'rss_feeds.json'
 
-# Function to display a status bar and input prompt in the same window
 def print_bottom_bar(win, message):
+    """Display a status bar and input prompt in the given window."""
     win.clear()
     win.bkgd(' ', curses.color_pair(1))
-    
-    # Display status message
     win.addstr(0, 0, message)
     win.refresh()
 
+
 def get_chatgpt_script(client, articles):
+    """Generate a news anchor script using ChatGPT based on the provided articles."""
     # Error checking for 'articles'
     if not isinstance(articles, list):
         raise ValueError("Expected 'articles' to be a list")
@@ -27,14 +27,11 @@ def get_chatgpt_script(client, articles):
             raise ValueError("Each article should be a dictionary with 'title' and 'summary' keys")
 
     messages = [
-        {"role": "system", "content": "You are a helpful assistant that writes news anchor scripts."}
+        {"role": "system", "content": "You are a helpful assistant that writes news anchor scripts."},
+        {"role": "user", "content": "Create a 99-second news anchor script for the following articles:\n\n" +
+         "\n".join(f"- {article['title']}: {article['summary']}" for article in articles)}
     ]
-    prompt = "Create a 99-second news anchor script for the following articles:\n\n"
     
-    for article in articles:
-        prompt += f"- {article['title']}: {article['summary']}\n"
-    messages.append({"role": "user", "content": prompt})
-
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=messages,
@@ -49,22 +46,21 @@ def get_chatgpt_script(client, articles):
 
     return response.choices[0].message.content.strip()
 
-# Function to fetch api key from system keyring
 def get_api_key(win):
+    """Fetch the OpenAI API key from the system keyring or prompt the user to enter it."""
     service_id = "ednasg"
     key_id = "api_key"
-    
     api_key = keyring.get_password(service_id, key_id)
+    
     while not api_key:
         print_bottom_bar(win, "Enter OpenAI API Key: ")
         api_key = win.getstr().decode('utf-8')
 
     keyring.set_password(service_id, key_id, api_key)
-
     return api_key
 
-# Function to display list of articles
 def display_articles(win, articles, start_idx):
+    """Display a paginated list of articles in the window."""
     height, width = win.getmaxyx()
     max_lines = height - 1  # Reserve space for status bar and input prompt
     max_width = width - 2
@@ -88,8 +84,9 @@ def display_articles(win, articles, start_idx):
             pass
 
     win.refresh()
-    
+
 def display_feeds(win, feeds, start_idx):
+    """Display a paginated list of RSS feeds in the window."""
     height, width = win.getmaxyx()
     max_lines = height - 1  # Reserve space for status bar and input prompt
     max_width = width - 2 # side margins
@@ -113,8 +110,8 @@ def display_feeds(win, feeds, start_idx):
 
     win.refresh()
 
-# Function for loading configuration
 def load_or_create_config(win):
+    """Load configuration from file or create a new one if not found or invalid."""
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, 'r') as f:
@@ -167,32 +164,27 @@ def update_config(url, nickname):
         # Handle any exceptions that occur during file operations
         print(f"Error updating configuration: {e}")
 
+def setup_windows(stdscr):
+    term_height, term_width = stdscr.getmaxyx()
+    message_area_win = curses.newwin(term_height - 1, term_width, 0, 0)
+    bottom_bar_win = curses.newwin(1, term_width, term_height - 1, 0)
+    bottom_bar_win.keypad(1)
+    return message_area_win, bottom_bar_win
+
 def get_rss_url(stdscr, bottom_bar_win, message_area_win, feeds):
     """Prompt the user for a feed number or a new URL until a valid selection is provided."""
     
     def is_valid_url(url):
         """Basic URL validation using regex."""
         return re.match(r'^(https?|ftp)://[^\s/$.?#].[^\s]*$', url) is not None
-    
-    # setup windows
-    def setup_windows():
-        term_height, term_width = stdscr.getmaxyx()
-        message_area_win = curses.newwin(term_height - 1, term_width, 0, 0)
-        bottom_bar_win = curses.newwin(1, term_width, term_height - 1, 0)
-        bottom_bar_win.keypad(1)
-        return message_area_win, bottom_bar_win
 
-    while True:
-        
-        height, width = message_area_win.getmaxyx()
-           
+    while True:   
         print_bottom_bar(bottom_bar_win, "Select a feed number or enter a new URL: ")   
         
         # Display available RSS feeds with scrolling
         feed_scroll_idx = 0
         selected_option = ""
-        while True:
-            height, width = message_area_win.getmaxyx()           
+        while True:   
             display_feeds(message_area_win, feeds, feed_scroll_idx)
             
             ch = bottom_bar_win.getch()
@@ -239,8 +231,8 @@ def get_rss_url(stdscr, bottom_bar_win, message_area_win, feeds):
             print_bottom_bar(bottom_bar_win, "Invalid selection. Press any key to continue...")
             bottom_bar_win.getch()
 
-def main(stdscr):
-    # curses setup
+def setup_curses(stdscr):
+    """Initialize curses settings."""
     curses.curs_set(1)
     curses.echo()
     stdscr.keypad(1)
@@ -248,16 +240,9 @@ def main(stdscr):
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
     stdscr.clear()
 
-    term_height, term_width = stdscr.getmaxyx()
-
+def main(stdscr):
     # setup windows
-    def setup_windows():
-        term_height, term_width = stdscr.getmaxyx()
-        message_area_win = curses.newwin(term_height - 1, term_width, 0, 0)
-        bottom_bar_win = curses.newwin(1, term_width, term_height - 1, 0)
-        bottom_bar_win.keypad(1)
-        return message_area_win, bottom_bar_win
-    
+    setup_curses(stdscr)
     message_area_win, bottom_bar_win = setup_windows()
     
     # get credentials and connect to API
