@@ -42,6 +42,6 @@ pip install -r requirements.txt
 
 # Print completion message
 echo "Installation complete! Your virtual environment is ready."
-echo "Activate it with: source venv/bin/activate"
 echo "You can run your program now!"
-echo "Run with: python ./ednasg.py"
+echo "Run these commands: source venv/bin/activate"
+echo "                    python ./ednasg.py"
