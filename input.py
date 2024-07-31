@@ -144,11 +144,11 @@ def get_rss_urls(stdscr, feeds):
                     bottom_win.print(f"Feed URL '{url}' already exists. Skipping...")
             else:
                 bottom_win.print(f"Invalid URL '{url}'. Skipping...")
-            time.sleep(0.1)  # Short delay to prevent rapid input issues
+            time.sleep(1)  # Short delay to prevent rapid input issues
         return feeds
 
     while True:
-        bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): ")
+        bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): ")
         
         feed_scroll_idx = 0
         selected_option = ""
@@ -156,7 +156,7 @@ def get_rss_urls(stdscr, feeds):
             message_win.display_feeds(feeds, feed_scroll_idx)
             
             ch = bottom_win.getch()
-            bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): " + selected_option)
+            bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): " + selected_option)
             
             if ch == curses.KEY_DOWN and feed_scroll_idx < len(feeds.items()) - 1:  # Scroll down
                 feed_scroll_idx += 1
@@ -166,18 +166,18 @@ def get_rss_urls(stdscr, feeds):
                 break
             elif ch == 127:  # Backspace key
                 selected_option = selected_option[:-1]
-                bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): " + selected_option)
+                bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): " + selected_option)
             elif ch == curses.KEY_RESIZE:  # Resize
                 stdscr.clear()
                 stdscr.refresh()
                 setup_windows(stdscr)
                 feed_scroll_idx = 0
-                bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): " + selected_option)
+                bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): " + selected_option)
             elif ch == 14:  # Ctrl+N
                 return None
             elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'):  # Valid character
                 selected_option += chr(ch)
-                bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): " + selected_option)
+                bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): " + selected_option)
         
         if selected_option.isdigit() and selected_option in feeds:
             # Valid feed number
@@ -187,8 +187,3 @@ def get_rss_urls(stdscr, feeds):
             # Either a single URL or multiple URLs
             urls = [url.strip() for url in selected_option.split(',')]
             feeds = add_feeds(feeds, urls)
-        
-        else:
-            # Prompt the user again if the input is invalid
-            bottom_win.print("Invalid selection. Press any key to continue...")
-            bottom_win.getch()

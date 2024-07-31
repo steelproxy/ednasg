@@ -32,11 +32,6 @@ def main(stdscr):
     # Load or create the configuration file
     message_win.print("Loading RSS config...")
     feeds = config.load_or_create_config()
-    
-    # Print error if feed list doesn't exist
-    if not feeds:
-        message_win.print("No RSS config loaded!")
-        return
 
     # Get selected option
     rss_url = input.get_rss_urls(stdscr, feeds)
@@ -114,11 +109,25 @@ def main(stdscr):
                 choices += chr(ch)
 
         # Get user's input for article selection
-        selected_indices = [
-            int(num.strip()) - 1
-            for num in choices.split(',')
-            if num.strip().isdigit()
-        ]
+        selected_numbers = [num.strip() for num in choices.split(',')]
+        selected_indices = []
+        invalid_input = False
+
+        for num in selected_numbers:
+            if num.isdigit():
+                index = int(num) - 1
+                if 0 <= index < len(articles):
+                    selected_indices.append(index)
+                else:
+                    invalid_input = True
+            else:
+                invalid_input = True
+
+        if invalid_input:
+            bottom_win.print("Invalid input. Ensure you enter valid article numbers. Press any key to exit...")
+            bottom_win.getch()  # Wait for user input before exiting
+            return  # Exit the current function or handle the error as needed
+
         selected_articles = [articles[i] for i in selected_indices]
 
     # Get custom prompt
