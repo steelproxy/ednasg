@@ -20,15 +20,6 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# Create a directory for the project
-PROJECT_DIR="ednasg"
-if [ ! -d "$PROJECT_DIR" ]; then
-    echo "Creating project directory: $PROJECT_DIR"
-    mkdir $PROJECT_DIR
-fi
-
-cd $PROJECT_DIR
-
 # Create a virtual environment
 echo "Creating a virtual environment..."
 python3 -m venv venv
