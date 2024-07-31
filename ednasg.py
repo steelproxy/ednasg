@@ -134,11 +134,11 @@ def main(stdscr):
     custom_prompt = input.get_multiline_input(stdscr, "Enter custom prompt for ChatGPT (ctrl+d for default):")
     bottom_win.print("Generating news anchor script...")
     script = gpt.get_script(client, selected_articles, custom_prompt)
-    bottom_win.print("Use UP/DOWN keys to scroll, 'q' to quit.")
     
     # Display the script in a scrollable manner
     script_scroll_idx = 0
     while True:
+        bottom_win.print("Use UP/DOWN keys to scroll, 'q' to quit.")
         message_win.display_script(script, script_scroll_idx)
         
         ch = bottom_win.getch()

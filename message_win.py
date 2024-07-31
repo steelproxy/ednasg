@@ -59,19 +59,28 @@ def display_feeds(feeds, start_idx):
     win.refresh()
 
 def display_script(script, start_idx=0):
-    """Display the script in a scrollable manner."""
+    """Display the script in a scrollable manner with wrapped lines."""
     height, width = win.getmaxyx()
     max_lines = height - 1  # Reserve space for status bar
+    max_width = width - 1  # Adjust for potential side margin
     lines = script.split('\n')
 
+    # Wrap lines to fit within the window width
+    wrapped_lines = []
+    for line in lines:
+        while len(line) > max_width:
+            wrapped_lines.append(line[:max_width])
+            line = line[max_width:]
+        wrapped_lines.append(line)
+
     # Calculate the range of lines to display
-    end_idx = min(start_idx + max_lines, len(lines))
+    end_idx = min(start_idx + max_lines, len(wrapped_lines))
 
     # Clear the window and display the lines
     win.clear()
     for i in range(start_idx, end_idx):
-        win.addstr(i - start_idx, 0, lines[i])
-    
+        win.addstr(i - start_idx, 0, wrapped_lines[i])
+
     win.refresh()
 
 def print(message):
