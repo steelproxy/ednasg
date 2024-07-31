@@ -13,11 +13,10 @@ def setup_curses(stdscr):
     """Initialize curses settings."""
     curses.curs_set(1)
     curses.echo()
-    stdscr.keypad(1)
     curses.start_color()
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    stdscr.keypad(1)
     stdscr.clear()
-
 
 def main(stdscr):
     # Setup windows
@@ -37,16 +36,17 @@ def main(stdscr):
     # Print error if feed list doesn't exist
     if not feeds:
         message_win.print("No RSS config loaded!")
+        return
 
     # Get selected option
     rss_url = input.get_rss_urls(stdscr, feeds)
 
-    # refresh window info if resize occurred in get_rss_urls
+    # Refresh window info if resize occurred in get_rss_urls
     stdscr.clear()
     stdscr.refresh()
     setup_windows(stdscr)
     
-    if rss_url is None: # manual input
+    if rss_url is None:  # Manual input
         message_win.print("Manual input selected.")
         bottom_win.print("Enter the title of the article:")
         title = bottom_win.getstr()
@@ -69,9 +69,10 @@ def main(stdscr):
                 return 1
 
             # Extract articles from feed
-            articles = [{'date': entry.updated_parsed, 'title': entry.title, 'summary': entry.summary} for entry in feed.entries]
-            
-            # Ensure there are articles in the feed
+            articles = [
+                {'date': entry.updated_parsed, 'title': entry.title, 'summary': entry.summary}
+                for entry in feed.entries
+            ]
             if not articles:
                 message_win.print("No articles found in the RSS feed.")
                 bottom_win.print("Press any key to exit...")
@@ -83,7 +84,7 @@ def main(stdscr):
             message_win.print(f"Error fetching RSS feed: {e}.")
             bottom_win.print("Press any key to exit...")
             bottom_win.getch()  # Wait for user input before proceeding
-            return  1 # Exit or handle the error as needed
+            return 1  # Exit or handle the error as needed
 
         bottom_win.print("Enter the numbers of articles to include (comma-separated): ")
         
@@ -109,11 +110,15 @@ def main(stdscr):
                 stdscr.refresh()
                 setup_windows(stdscr)
                 article_scroll_idx = 0
-            elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'):
+            elif ch not in (curses.KEY_UP, curses.KEY_DOWN, ord('\n')):
                 choices += chr(ch)
 
         # Get user's input for article selection
-        selected_indices = [int(num.strip()) - 1 for num in choices.split(',') if num.strip().isdigit()]
+        selected_indices = [
+            int(num.strip()) - 1
+            for num in choices.split(',')
+            if num.strip().isdigit()
+        ]
         selected_articles = [articles[i] for i in selected_indices]
 
     # Get custom prompt

@@ -13,13 +13,13 @@ def display_articles(articles, start_idx):
     win.addstr(0, 0, "Available Articles:")
     line_number = 1
     for idx in range(start_idx, min(start_idx + max_lines - 1, len(articles))):
-        # get article info
+        # Get article info
         article = articles[idx]
         title = article['title']
         date = article['date']
         date_str = time.strftime("%m,%d,%y", date)
 
-        # truncate title
+        # Truncate title if needed
         if len(title) > max_width:
             title = title[:max_width - 3] + "..."
 
@@ -30,7 +30,7 @@ def display_articles(articles, start_idx):
             pass
 
     win.refresh()
-    
+
 def display_feeds(feeds, start_idx):
     """Display a paginated list of RSS feeds in the window."""
     height, width = win.getmaxyx()
@@ -41,12 +41,12 @@ def display_feeds(feeds, start_idx):
     win.addstr(0, 0, "Available RSS Feeds:")
     line_number = 1
     for idx in range(start_idx, min(start_idx + max_lines - 1, len(feeds.items()))):
-        # get feed info
+        # Get feed info
         key, details = list(feeds.items())[idx]
         nickname = details['nickname']
         url = details['url']
         
-        # truncate feed
+        # Truncate feed nickname if needed
         if len(nickname) > max_width:
             nickname = nickname[:max_width - 3] + "..."
 
@@ -57,7 +57,7 @@ def display_feeds(feeds, start_idx):
             pass
 
     win.refresh()
-    
+
 def display_script(script, start_idx=0):
     """Display the script in a scrollable manner."""
     height, width = win.getmaxyx()
@@ -80,8 +80,10 @@ def print(message):
     win.refresh()
 
 def clear():
+    """Clear the window."""
     win.clear()
     win.refresh()
-    
+
 def getch():
+    """Get a character from the window."""
     return win.getch()

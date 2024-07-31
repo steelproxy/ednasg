@@ -30,11 +30,12 @@ def update_config(url, nickname):
     except Exception as e:
         # Handle any exceptions that occur during file operations
         raise ValueError(f"Error updating configuration: {e}")
+    
     return feeds
 
 def get_api_key():
     """Fetch the OpenAI API key from the system keyring or prompt the user to enter it."""
-    # keyring request
+    # Keyring request
     service_id = "ednasg"
     key_id = "api_key"
     api_key = keyring.get_password(service_id, key_id)
@@ -44,11 +45,10 @@ def get_api_key():
             bottom_win.print("Enter OpenAI API Key: ")
             api_key = bottom_win.getstr()
     
-    # get key if nonexistent
-    while not api_key:
-        return None
-
-    keyring.set_password(service_id, key_id, api_key)
+    # Store the key if it was newly entered
+    if api_key:
+        keyring.set_password(service_id, key_id, api_key)
+    
     return api_key
 
 def load_or_create_config():

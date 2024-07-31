@@ -23,6 +23,7 @@ def wrap_text(text, width):
     return wrapped_lines
 
 def get_multiline_input(stdscr, prompt, end_key=4):
+    """Get multiline input from the user with scroll and cursor support."""
     input_str = [""]
     cursor_x = 0
     cursor_y = 0
@@ -86,8 +87,7 @@ def get_multiline_input(stdscr, prompt, end_key=4):
                 cursor_x = min(cursor_x, len(input_str[cursor_y]))
                 if cursor_y >= max_y + scroll_offset - 1:
                     scroll_offset += 1
-        elif ch == curses.KEY_RESIZE:
-            # Resize handling
+        elif ch == curses.KEY_RESIZE:  # Resize handling
             max_y, max_x = message_win.win.getmaxyx()
             setup_windows(stdscr)
             cursor_x = 0
@@ -146,7 +146,7 @@ def get_rss_urls(stdscr, feeds):
                 bottom_win.print(f"Invalid URL '{url}'. Skipping...")
             time.sleep(0.1)  # Short delay to prevent rapid input issues
         return feeds
-    
+
     while True:
         bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): ")
         
@@ -158,25 +158,24 @@ def get_rss_urls(stdscr, feeds):
             ch = bottom_win.getch()
             bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): " + selected_option)
             
-            if ch == curses.KEY_DOWN and feed_scroll_idx < len(feeds.items()) - 1: # scroll down
+            if ch == curses.KEY_DOWN and feed_scroll_idx < len(feeds.items()) - 1:  # Scroll down
                 feed_scroll_idx += 1
-            elif ch == curses.KEY_UP and feed_scroll_idx > 0: # scroll up
+            elif ch == curses.KEY_UP and feed_scroll_idx > 0:  # Scroll up
                 feed_scroll_idx -= 1
-            elif ch == ord('\n'): # newline
+            elif ch == ord('\n'):  # Newline
                 break
             elif ch == 127:  # Backspace key
                 selected_option = selected_option[:-1]
                 bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): " + selected_option)
-            elif ch == curses.KEY_RESIZE: # resize
-                # Resize handling
+            elif ch == curses.KEY_RESIZE:  # Resize
                 stdscr.clear()
                 stdscr.refresh()
                 setup_windows(stdscr)
                 feed_scroll_idx = 0
                 bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): " + selected_option)
-            elif ch == 14: # ctrl+n
+            elif ch == 14:  # Ctrl+N
                 return None
-            elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'): # valid character
+            elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'):  # Valid character
                 selected_option += chr(ch)
                 bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): " + selected_option)
         
