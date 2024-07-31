@@ -219,7 +219,7 @@ def get_rss_urls(stdscr, bottom_bar_win, message_area_win, feeds):
         return feeds
     
     while True:
-        print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: ")
+        print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): ")
         
         feed_scroll_idx = 0
         selected_option = ""
@@ -227,7 +227,7 @@ def get_rss_urls(stdscr, bottom_bar_win, message_area_win, feeds):
             display_feeds(message_area_win, feeds, feed_scroll_idx)
             
             ch = bottom_bar_win.getch()
-            print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: " + selected_option)
+            print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): " + selected_option)
             
             if ch == curses.KEY_DOWN and feed_scroll_idx < len(feeds.items()) - 1: # scroll down
                 feed_scroll_idx += 1
@@ -237,17 +237,19 @@ def get_rss_urls(stdscr, bottom_bar_win, message_area_win, feeds):
                 break
             elif ch == 127:  # Backspace key
                 selected_option = selected_option[:-1]
-                print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: " + selected_option)
+                print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): " + selected_option)
             elif ch == curses.KEY_RESIZE: # resize
                 # Resize handling
                 stdscr.clear()
                 stdscr.refresh()
                 message_area_win, bottom_bar_win = setup_windows(stdscr)
                 feed_scroll_idx = 0
-                print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: " + selected_option)
+                print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): " + selected_option)
+            elif ch == 14: # ctrl+n
+                return None
             elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'): # valid character
                 selected_option += chr(ch)
-                print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs: " + selected_option)
+                print_bottom_bar(bottom_bar_win, "Select a feed number, enter a single URL, or enter multiple URLs (ctrl+n to skip): " + selected_option)
         
         if selected_option.isdigit() and selected_option in feeds:
             # Valid feed number
@@ -316,68 +318,76 @@ def main(stdscr):
     stdscr.refresh()
     message_area_win, bottom_bar_win = setup_windows(stdscr)
     
-    # Get articles from RSS
-    print_bottom_bar(bottom_bar_win, "Fetching RSS feed...")
-    try:
-        feed = feedparser.parse(rss_url)
-        
-        # Check for feed parsing errors
-        if feed.bozo:
-            message_area_win.addstr("Error parsing RSS feed. The feed may be invalid or improperly formatted.\n")
+    if rss_url is None:
+        print_bottom_bar(bottom_bar_win, "Enter the title of the article:")
+        title = bottom_bar_win.getstr().decode('utf-8').strip()
+        print_bottom_bar(bottom_bar_win, "Enter the summary of the article:")
+        summary = bottom_bar_win.getstr().decode('utf-8').strip()
+        date = time.localtime()  # Current date
+        selected_articles = [{'title': title, 'summary': summary, 'date': date}]
+    else:
+        # Get articles from RSS
+        print_bottom_bar(bottom_bar_win, "Fetching RSS feed...")
+        try:
+            feed = feedparser.parse(rss_url)
+            
+            # Check for feed parsing errors
+            if feed.bozo:
+                message_area_win.addstr("Error parsing RSS feed. The feed may be invalid or improperly formatted.\n")
+                message_area_win.refresh()
+                print_bottom_bar(bottom_bar_win, "Press any key to exit...")
+                bottom_bar_win.getch()
+                return 1
+
+            # Extract articles from feed
+            articles = [{'date': entry.updated_parsed, 'title': entry.title, 'summary': entry.summary} for entry in feed.entries]
+            
+            # Ensure there are articles in the feed
+            if not articles:
+                message_area_win.addstr("No articles found in the RSS feed.\n")
+                message_area_win.refresh()
+                print_bottom_bar(bottom_bar_win, "Press any key to exit...")
+                bottom_bar_win.getch()
+                return 1
+
+        except Exception as e:
+            # Handle different types of exceptions (e.g., network errors, URL errors)
+            message_area_win.addstr(f"Error fetching RSS feed: {e}.")
             message_area_win.refresh()
             print_bottom_bar(bottom_bar_win, "Press any key to exit...")
-            bottom_bar_win.getch()
-            return 1
+            bottom_bar_win.getch()  # Wait for user input before proceeding
+            return  1 # Exit or handle the error as needed
 
-        # Extract articles from feed
-        articles = [{'date': entry.updated_parsed, 'title': entry.title, 'summary': entry.summary} for entry in feed.entries]
+        print_bottom_bar(bottom_bar_win, "Enter the numbers of articles to include (comma-separated): ")
         
-        # Ensure there are articles in the feed
-        if not articles:
-            message_area_win.addstr("No articles found in the RSS feed.\n")
-            message_area_win.refresh()
-            print_bottom_bar(bottom_bar_win, "Press any key to exit...")
-            bottom_bar_win.getch()
-            return 1
+        article_scroll_idx = 0
+        choices = ""
+        while True:
+            display_articles(message_area_win, articles, article_scroll_idx)
+            print_bottom_bar(bottom_bar_win, "Enter the numbers of articles to include (comma-separated): " + choices)
+            
+            ch = bottom_bar_win.getch()
+            
+            if ch == curses.KEY_DOWN and article_scroll_idx < len(articles) - 1:
+                article_scroll_idx += 1
+            elif ch == curses.KEY_UP and article_scroll_idx > 0:
+                article_scroll_idx -= 1
+            elif ch == 127:  # Backspace key
+                choices = choices[:-1]
+            elif ch == ord('\n'):
+                break
+            elif ch == curses.KEY_RESIZE:
+                # Resize handling
+                stdscr.clear()
+                stdscr.refresh()
+                message_area_win, bottom_bar_win = setup_windows(stdscr)
+                article_scroll_idx = 0
+            elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'):
+                choices += chr(ch)
 
-    except Exception as e:
-        # Handle different types of exceptions (e.g., network errors, URL errors)
-        message_area_win.addstr(f"Error fetching RSS feed: {e}.")
-        message_area_win.refresh()
-        print_bottom_bar(bottom_bar_win, "Press any key to exit...")
-        bottom_bar_win.getch()  # Wait for user input before proceeding
-        return  1 # Exit or handle the error as needed
-
-    print_bottom_bar(bottom_bar_win, "Enter the numbers of articles to include (comma-separated): ")
-    
-    article_scroll_idx = 0
-    choices = ""
-    while True:
-        display_articles(message_area_win, articles, article_scroll_idx)
-        print_bottom_bar(bottom_bar_win, "Enter the numbers of articles to include (comma-separated): " + choices)
-        
-        ch = bottom_bar_win.getch()
-        
-        if ch == curses.KEY_DOWN and article_scroll_idx < len(articles) - 1:
-            article_scroll_idx += 1
-        elif ch == curses.KEY_UP and article_scroll_idx > 0:
-            article_scroll_idx -= 1
-        elif ch == 127:  # Backspace key
-            choices = choices[:-1]
-        elif ch == ord('\n'):
-            break
-        elif ch == curses.KEY_RESIZE:
-            # Resize handling
-            stdscr.clear()
-            stdscr.refresh()
-            message_area_win, bottom_bar_win = setup_windows(stdscr)
-            article_scroll_idx = 0
-        elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'):
-            choices += chr(ch)
-
-    # Get user's input for article selection
-    selected_indices = [int(num.strip()) - 1 for num in choices.split(',') if num.strip().isdigit()]
-    selected_articles = [articles[i] for i in selected_indices]
+        # Get user's input for article selection
+        selected_indices = [int(num.strip()) - 1 for num in choices.split(',') if num.strip().isdigit()]
+        selected_articles = [articles[i] for i in selected_indices]
 
     # Get custom prompt
     custom_prompt = get_custom_prompt(bottom_bar_win)
