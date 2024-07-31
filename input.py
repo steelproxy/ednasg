@@ -28,7 +28,7 @@ def get_multiline_input(stdscr, prompt, end_key=4):
     cursor_x = 0
     cursor_y = 0
     scroll_offset = 0
-
+    curses.noecho()
     while True:
         max_y, max_x = message_win.win.getmaxyx()
         bottom_win.print(prompt)
@@ -118,6 +118,7 @@ def get_multiline_input(stdscr, prompt, end_key=4):
                 scroll_offset += 1
 
     curses.curs_set(0)
+    curses.echo()
     return '\n'.join(input_str).strip()
 
 def get_rss_urls(stdscr, feeds):

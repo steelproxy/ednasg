@@ -33,6 +33,10 @@ def main(stdscr):
     message_win.print("Loading RSS config...")
     feeds = config.load_or_create_config()
 
+    message_win.print("Welcome to ednasg!")
+    bottom_win.print("Press any button to continue...")
+    bottom_win.getch()
+
     # Get selected option
     rss_url = input.get_rss_urls(stdscr, feeds)
 
@@ -131,7 +135,7 @@ def main(stdscr):
         selected_articles = [articles[i] for i in selected_indices]
 
     # Get custom prompt
-    custom_prompt = input.get_multiline_input(stdscr, "Enter custom prompt for ChatGPT (ctrl+d for default):")
+    custom_prompt = input.get_multiline_input(stdscr, "Enter custom prompt for ChatGPT (ctrl+d to end, empty for default):")
     bottom_win.print("Generating news anchor script...")
     script = gpt.get_script(client, selected_articles, custom_prompt)
     
