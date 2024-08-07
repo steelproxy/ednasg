@@ -1,6 +1,11 @@
 @echo off
 setlocal enabledelayedexpansion
 
+REM Check for Python and install if not found
+python --version 2>NUL
+if errorlevel 1 goto install_python
+call :python_installed
+
 REM Function to install Python
 :install_python
 echo Python not found. Installing Python...
@@ -10,11 +15,7 @@ del python-installer.exe
 echo Python installation complete.
 exit /b 0
 
-REM Check for Python and install if not found
-where python >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    call :install_python
-)
+:python_installed
 
 REM Ensure Python is available in the PATH
 where python >nul 2>&1
@@ -22,6 +23,10 @@ if %ERRORLEVEL% NEQ 0 (
     echo Python installation failed!
     exit /b 1
 )
+
+REM Install venv-run
+echo "Installing venv-run"
+pip install venv-run
 
 REM Create a virtual environment
 echo Creating a virtual environment...
@@ -35,6 +40,10 @@ REM Create requirements.txt if it doesn't exist
 echo feedparser > requirements.txt
 echo openai >> requirements.txt
 echo keyring >> requirements.txt
+echo windows-curses >> requirements.txt
+
+REM Create start script
+echo venv-run ednasg.py > start.bat
 
 REM Install required packages
 echo Installing required packages...
@@ -44,7 +53,10 @@ pip install -r requirements.txt
 REM Print completion message
 echo Installation complete! Your virtual environment is ready.
 echo You can run your program now!
-echo Run these commands: venv\Scripts\activate
-echo                    python ./ednasg.py
+echo Double click start.bat to run or run these commands:
+echo venv\Scripts\activate
+echo python ednasg.py
 
+pause
 endlocal
+exit
