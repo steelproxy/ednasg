@@ -1,3 +1,4 @@
+import subprocess
 import feedparser
 import curses
 import time
@@ -7,7 +8,23 @@ import bottom_win
 import message_win
 import gpt
 import input
+import os
 from setup_windows import setup_windows
+
+def update_repo():
+    """Run the update script to fetch the latest code from GitHub."""
+    if (os.name == 'nt'): # Windows
+        return
+
+    try:
+        result = subprocess.run(["python", "update_script.py"], check=True)
+        if result.returncode == 0:
+            message_win.print("Repository updated successfully.")
+        else:
+            message_win.print("Update script failed. Proceeding with the current version...")
+    except subprocess.CalledProcessError as e:
+        message_win.print(f"Failed to run update script: {e}")
+        message_win.print("Proceeding with the current version...")
 
 def setup_curses(stdscr):
     """Initialize curses settings."""
@@ -22,6 +39,9 @@ def main(stdscr):
     # Setup windows
     setup_curses(stdscr)
     setup_windows(stdscr)
+    
+    # Update the repo before starting the main application
+    update_repo()
     
     # Get credentials and connect to API
     message_win.print("Finding API key...")

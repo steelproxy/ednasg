@@ -35,6 +35,9 @@ def update_config(url, nickname):
 
 def get_api_key():
     """Fetch the OpenAI API key from the system keyring or prompt the user to enter it."""
+    if (os.name == 'nt'):
+        keyring.set_keyring(keyring.backends.Windows.WinVaultKeyring())
+    
     # Keyring request
     service_id = "ednasg"
     key_id = "api_key"
