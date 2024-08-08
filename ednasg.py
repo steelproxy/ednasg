@@ -99,7 +99,7 @@ def main(stdscr):
                 article_scroll_idx += 1
             elif ch == curses.KEY_UP and article_scroll_idx > 0:
                 article_scroll_idx -= 1
-            elif ch == 127:  # Backspace key
+            elif ch in (curses.KEY_BACKSPACE, 127, '\b'):  # Backspace key
                 choices = choices[:-1]
             elif ch == ord('\n'):
                 break

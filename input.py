@@ -49,7 +49,7 @@ def get_multiline_input(stdscr, prompt, end_key=4):
 
         if ch == end_key:  # End of input (Ctrl+D)
             break
-        elif ch in (curses.KEY_BACKSPACE, 127):  # Handle backspace
+        elif ch in (curses.KEY_BACKSPACE, 127, '\b'):  # Handle backspace
             if cursor_x > 0:
                 input_str[cursor_y] = input_str[cursor_y][:cursor_x - 1] + input_str[cursor_y][cursor_x:]
                 cursor_x -= 1
@@ -165,7 +165,7 @@ def get_rss_urls(stdscr, feeds):
                 feed_scroll_idx -= 1
             elif ch == ord('\n'):  # Newline
                 break
-            elif ch == 127:  # Backspace key
+            elif ch in (curses.KEY_BACKSPACE, 127, '\b'): # Backspace
                 selected_option = selected_option[:-1]
                 bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): " + selected_option)
             elif ch == curses.KEY_RESIZE:  # Resize
