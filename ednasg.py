@@ -43,7 +43,7 @@ def main(stdscr):
     setup_windows()
     
     # Update the repo before starting the main application
-    #update_repo()
+    update_repo()
     
     # Get credentials and connect to API
     message_win.print("Finding API key...")
@@ -114,6 +114,7 @@ def main(stdscr):
         bottom_win.print("Enter the numbers of articles to include (comma-separated): ")
         
         article_scroll_idx = 0
+        cursor_pos = 0  # Tracks cursor position in the input string
         choices = ""
         while True:
             message_win.display_articles(articles, article_scroll_idx)
@@ -125,8 +126,14 @@ def main(stdscr):
                 article_scroll_idx += 1
             elif ch == curses.KEY_UP and article_scroll_idx > 0:
                 article_scroll_idx -= 1
+            elif ch in (curses.KEY_LEFT, 452) and cursor_pos > 0:
+                cursor_pos -= 1  # Move cursor left
+            elif ch in (curses.KEY_RIGHT, 454) and cursor_pos < len(choices):
+                cursor_pos += 1  # Move cursor right
             elif ch in (curses.KEY_BACKSPACE, 127, '\b'):  # Backspace key
-                choices = choices[:-1]
+                if cursor_pos > 0:
+                    choices = choices[:cursor_pos - 1] + choices[cursor_pos:]
+                    cursor_pos -= 1
             elif ch == ord('\n'):
                 break
             elif ch == curses.KEY_RESIZE:
@@ -135,8 +142,9 @@ def main(stdscr):
                 stdscr.refresh()
                 setup_windows()
                 article_scroll_idx = 0
-            elif ch not in (curses.KEY_UP, curses.KEY_DOWN, ord('\n')):
-                choices += chr(ch)
+            elif ch not in (curses.KEY_UP, curses.KEY_DOWN, curses.KEY_LEFT, 452, curses.KEY_RIGHT, 454, ord('\n')):
+                choices = choices[:cursor_pos] + chr(ch) + choices[cursor_pos:]
+                cursor_pos += 1
 
         # Get user's input for article selection
         selected_numbers = [num.strip() for num in choices.split(',')]

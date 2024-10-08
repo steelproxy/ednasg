@@ -42,10 +42,10 @@ def getstr(prompt):
             if cursor_x > 0:
                 input_str.pop(cursor_x - 1)
                 cursor_x -= 1
-        elif ch == curses.KEY_LEFT:  # Move cursor left
+        elif ch in (curses.KEY_LEFT, 452):  # Move cursor left
             if cursor_x > 0:
                 cursor_x -= 1
-        elif ch == curses.KEY_RIGHT:  # Move cursor right
+        elif ch in (curses.KEY_RIGHT, 454):  # Move cursor right
             if cursor_x < len(input_str):
                 cursor_x += 1
         elif ch == curses.KEY_RESIZE:  # Resize handling

@@ -59,7 +59,7 @@ def get_multiline_input(prompt, end_key=4):
                 cursor_y -= 1
                 if cursor_y < scroll_offset:
                     scroll_offset -= 1
-        elif ch == curses.KEY_LEFT:  # Move cursor left
+        elif ch in (curses.KEY_LEFT, 452):  # Move cursor left
             if cursor_x > 0:
                 cursor_x -= 1
             elif cursor_y > 0:
@@ -67,7 +67,7 @@ def get_multiline_input(prompt, end_key=4):
                 cursor_x = len(input_str[cursor_y])
                 if cursor_y < scroll_offset:
                     scroll_offset -= 1
-        elif ch == curses.KEY_RIGHT:  # Move cursor right
+        elif ch in (curses.KEY_RIGHT, 454):  # Move cursor right
             if cursor_x < len(input_str[cursor_y]):
                 cursor_x += 1
             elif cursor_y < len(input_str) - 1:
@@ -153,6 +153,7 @@ def get_rss_urls(feeds):
         
         feed_scroll_idx = 0
         selected_option = ""
+        cursor_pos = 0  # Tracks cursor position in the input string
         while True:
             message_win.display_feeds(feeds, feed_scroll_idx)
             
@@ -163,6 +164,10 @@ def get_rss_urls(feeds):
                 feed_scroll_idx += 1
             elif ch == curses.KEY_UP and feed_scroll_idx > 0:  # Scroll up
                 feed_scroll_idx -= 1
+            elif ch in (curses.KEY_LEFT, 452) and cursor_pos > 0:
+                cursor_pos -= 1  # Move cursor left
+            elif ch in (curses.KEY_RIGHT, 454) and cursor_pos < len(selected_option):
+                cursor_pos += 1  # Move cursor right
             elif ch == ord('\n'):  # Newline
                 break
             elif ch in (curses.KEY_BACKSPACE, 127, '\b'): # Backspace
@@ -176,8 +181,9 @@ def get_rss_urls(feeds):
                 bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): " + selected_option)
             elif ch == 14:  # Ctrl+N
                 return None
-            elif ch != curses.KEY_UP and ch != curses.KEY_DOWN and ch != ord('\n'):  # Valid character
-                selected_option += chr(ch)
+            elif ch not in (curses.KEY_UP, curses.KEY_DOWN, curses.KEY_LEFT, 452, curses.KEY_RIGHT, 454, ord('\n')):
+                selected_option = selected_option[:cursor_pos] + chr(ch) + selected_option[cursor_pos:]
+                cursor_pos += 1
                 bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): " + selected_option)
         
         if selected_option.isdigit() and selected_option in feeds:
