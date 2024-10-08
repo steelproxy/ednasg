@@ -2,9 +2,11 @@ import curses
 import message_win
 import bottom_win
 
-def setup_windows(stdscr):
+global stdscr
+
+def setup_windows():
     """Initialize the curses windows."""
-    term_height, term_width = stdscr.getmaxyx()
+    term_height, term_width = setup_windows.stdscr.getmaxyx()
     
     # Initialize the message window
     message_win.win = curses.newwin(term_height - 1, term_width, 0, 0)

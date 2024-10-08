@@ -22,7 +22,7 @@ def wrap_text(text, width):
         wrapped_lines.append(line)
     return wrapped_lines
 
-def get_multiline_input(stdscr, prompt, end_key=4):
+def get_multiline_input(prompt, end_key=4):
     """Get multiline input from the user with scroll and cursor support."""
     input_str = [""]
     cursor_x = 0
@@ -89,7 +89,7 @@ def get_multiline_input(stdscr, prompt, end_key=4):
                     scroll_offset += 1
         elif ch == curses.KEY_RESIZE:  # Resize handling
             max_y, max_x = message_win.win.getmaxyx()
-            setup_windows(stdscr)
+            setup_windows()
             cursor_x = 0
             cursor_y = 0
             scroll_offset = 0
@@ -121,7 +121,7 @@ def get_multiline_input(stdscr, prompt, end_key=4):
     curses.echo()
     return '\n'.join(input_str).strip()
 
-def get_rss_urls(stdscr, feeds):
+def get_rss_urls(feeds):
     """Prompt the user to input one or multiple new RSS feed URLs."""
     
     def is_valid_url(url):
@@ -169,9 +169,9 @@ def get_rss_urls(stdscr, feeds):
                 selected_option = selected_option[:-1]
                 bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): " + selected_option)
             elif ch == curses.KEY_RESIZE:  # Resize
-                stdscr.clear()
-                stdscr.refresh()
-                setup_windows(stdscr)
+                setup_windows.stdscr.clear()
+                setup_windows.stdscr.refresh()
+                setup_windows()
                 feed_scroll_idx = 0
                 bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): " + selected_option)
             elif ch == 14:  # Ctrl+N

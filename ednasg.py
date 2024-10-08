@@ -26,22 +26,24 @@ def update_repo():
         message_win.print(f"Failed to run update script: {e}")
         message_win.print("Proceeding with the current version...")
 
-def setup_curses(stdscr):
+def setup_curses():
     """Initialize curses settings."""
     curses.curs_set(1)
     curses.echo()
     curses.start_color()
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    stdscr.keypad(1)
-    stdscr.clear()
+    setup_windows.stdscr.keypad(1)
+    setup_windows.stdscr.clear()
 
 def main(stdscr):
     # Setup windows
-    setup_curses(stdscr)
-    setup_windows(stdscr)
+    setup_windows.stdscr = stdscr
+    
+    setup_curses()
+    setup_windows()
     
     # Update the repo before starting the main application
-    update_repo()
+    #update_repo()
     
     # Get credentials and connect to API
     message_win.print("Finding API key...")
@@ -57,23 +59,27 @@ def main(stdscr):
     bottom_win.print("Press any button to continue...")
     bottom_win.getch()
 
+    # Refresh window info if resize occurred in get_rss_urls
+    stdscr.clear()
+    stdscr.refresh()
+    setup_windows()
+
     # Get selected option
-    rss_url = input.get_rss_urls(stdscr, feeds)
+    rss_url = input.get_rss_urls(feeds)
 
     # Refresh window info if resize occurred in get_rss_urls
     stdscr.clear()
     stdscr.refresh()
-    setup_windows(stdscr)
+    setup_windows()
     
     if rss_url is None:  # Manual input
         message_win.print("Manual input selected.")
-        bottom_win.print("Enter the title of the article:")
-        title = bottom_win.getstr()
+        title = bottom_win.getstr("Enter the title of the article:")
         message_win.print(f"Title: {title}")
-        summary = input.get_multiline_input(stdscr, "Enter the summary of the article (ctrl + d to end input):")
+        summary = input.get_multiline_input("Enter the summary of the article (ctrl + d to end input):")
         date = time.localtime()  # Current date
         selected_articles = [{'title': title, 'summary': summary, 'date': date}]
-        setup_windows(stdscr)
+        setup_windows()
     else:
         # Get articles from RSS
         bottom_win.print("Fetching RSS feed...")
@@ -127,7 +133,7 @@ def main(stdscr):
                 # Resize handling
                 stdscr.clear()
                 stdscr.refresh()
-                setup_windows(stdscr)
+                setup_windows()
                 article_scroll_idx = 0
             elif ch not in (curses.KEY_UP, curses.KEY_DOWN, ord('\n')):
                 choices += chr(ch)
@@ -155,7 +161,7 @@ def main(stdscr):
         selected_articles = [articles[i] for i in selected_indices]
 
     # Get custom prompt
-    custom_prompt = input.get_multiline_input(stdscr, "Enter custom prompt for ChatGPT (ctrl+d to end, empty for default):")
+    custom_prompt = input.get_multiline_input("Enter custom prompt for ChatGPT (ctrl+d to end, empty for default):")
     bottom_win.print("Generating news anchor script...")
     script = gpt.get_script(client, selected_articles, custom_prompt)
     
@@ -176,7 +182,7 @@ def main(stdscr):
             # Resize handling
             stdscr.clear()
             stdscr.refresh()
-            setup_windows(stdscr)
+            setup_windows()
             script_scroll_idx = 0
     
     bottom_win.print("Filename to save to (default: news_script.txt): ")
