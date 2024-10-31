@@ -3,6 +3,7 @@ import json
 import os
 import bottom_win
 from jsonschema import validate, ValidationError
+from keyring.backends.Windows import WinVaultKeyring
 
 CONFIG_FILE = 'rss_feeds.json'
 
@@ -62,7 +63,7 @@ def update_config(url, nickname):
 def get_api_key():
     """Fetch the OpenAI API key from the system keyring or prompt the user to enter it."""
     if os.name == 'nt':
-        keyring.set_keyring(keyring.backends.Windows.WinVaultKeyring())
+        keyring.set_keyring(WinVaultKeyring())
     
     service_id = "ednasg"
     key_id = "api_key"

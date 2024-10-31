@@ -135,8 +135,7 @@ def get_rss_urls(feeds):
             if is_valid_url(url):
                 # Check if URL is already in the config
                 if not any(feed['url'] == url for feed in feeds.values()):
-                    bottom_win.print(f"Enter a nickname for the new feed '{url}': ")
-                    while not (nickname := bottom_win.getstr()):
+                    while not (nickname := bottom_win.getstr(f"Enter a nickname for the new feed '{url}': ")):
                         bottom_win.print("Invalid nickname. Press any key to continue...")
                         bottom_win.getch()
                         bottom_win.print(f"Enter a nickname for the new feed '{url}': ")
@@ -148,17 +147,17 @@ def get_rss_urls(feeds):
             time.sleep(1)  # Short delay to prevent rapid input issues
         return feeds
 
+    prompt = "Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): "
     while True:
-        bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): ")
-        
         feed_scroll_idx = 0
         selected_option = ""
         cursor_pos = 0  # Tracks cursor position in the input string
         while True:
             message_win.display_feeds(feeds, feed_scroll_idx)
-            
+            bottom_win.print(prompt + selected_option)
+            bottom_win.win.move(0, len(prompt) + cursor_pos + 1)
+            bottom_win.win.refresh()
             ch = bottom_win.getch()
-            bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): " + selected_option)
             
             if ch == curses.KEY_DOWN and feed_scroll_idx < len(feeds.items()) - 1:  # Scroll down
                 feed_scroll_idx += 1
@@ -170,22 +169,23 @@ def get_rss_urls(feeds):
                 cursor_pos += 1  # Move cursor right
             elif ch == ord('\n'):  # Newline
                 break
-            elif ch in (curses.KEY_BACKSPACE, 127, '\b'): # Backspace
-                selected_option = selected_option[:-1]
-                bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): " + selected_option)
+            elif ch in (curses.KEY_BACKSPACE, 127, '\b', 546):  # Backspace
+                if cursor_pos > 0:
+                    # Remove the character before the cursor
+                    selected_option = selected_option[:cursor_pos - 1] + selected_option[cursor_pos:]
+                    cursor_pos -= 1
             elif ch == curses.KEY_RESIZE:  # Resize
                 setup_windows.stdscr.clear()
                 setup_windows.stdscr.refresh()
                 setup_windows()
                 feed_scroll_idx = 0
-                bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): " + selected_option)
             elif ch == 14:  # Ctrl+N
                 return None
-            elif ch not in (curses.KEY_UP, curses.KEY_DOWN, curses.KEY_LEFT, 452, curses.KEY_RIGHT, 454, ord('\n')):
+            elif ch not in (curses.KEY_UP, curses.KEY_DOWN, curses.KEY_LEFT, 452, curses.KEY_RIGHT, 454, ord('\n'), curses.KEY_BACKSPACE, 127, '\b'):
                 selected_option = selected_option[:cursor_pos] + chr(ch) + selected_option[cursor_pos:]
                 cursor_pos += 1
-                bottom_win.print("Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): " + selected_option)
-        
+            else:
+                continue
         if selected_option.isdigit() and selected_option in feeds:
             # Valid feed number
             return feeds[selected_option]['url']
