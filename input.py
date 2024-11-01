@@ -6,6 +6,8 @@ import config
 import time
 from setup_windows import setup_windows
 
+# TODO: FIX OVERFLOW ISSUE ON 160!!!!!!!
+
 def sanitize_input_char(ch):
     """Sanitize the input character to avoid unwanted control characters."""
     if 32 <= ch < 127 or ch == ord('\n'):
@@ -123,7 +125,7 @@ def get_multiline_input(prompt, end_key=4):
 
 def get_rss_urls(feeds):
     """Prompt the user to input one or multiple new RSS feed URLs."""
-    
+
     def is_valid_url(url):
         """Basic URL validation using regex."""
         return re.match(r'^(https?|ftp)://[^\s/$.?#].[^\s]*$', url) is not None
@@ -133,64 +135,88 @@ def get_rss_urls(feeds):
         for url in urls:
             url = url.strip()
             if is_valid_url(url):
-                # Check if URL is already in the config
-                if not any(feed['url'] == url for feed in feeds.values()):
-                    while not (nickname := bottom_win.getstr(f"Enter a nickname for the new feed '{url}': ")):
-                        bottom_win.print("Invalid nickname. Press any key to continue...")
-                        bottom_win.getch()
-                        bottom_win.print(f"Enter a nickname for the new feed '{url}': ")
-                    feeds = config.update_config(url, nickname)
-                else:
+                if any(feed['url'] == url for feed in feeds.values()):
                     bottom_win.print(f"Feed URL '{url}' already exists. Skipping...")
+                else:
+                    nickname = ""
+                    while not nickname:
+                        nickname = bottom_win.getstr(f"Enter a nickname for the new feed {url}: ").strip()
+                        if not nickname:
+                            bottom_win.print("Invalid nickname. Try again.")
+                    feeds = config.update_config(url, nickname)
             else:
                 bottom_win.print(f"Invalid URL '{url}'. Skipping...")
             time.sleep(1)  # Short delay to prevent rapid input issues
         return feeds
 
-    prompt = "Select a feed number, enter a single URL, or enter multiple URLs (ctrl-c to quit ctrl+n to skip): "
+    prompt = "Select a feed number or enter URLs (Ctrl+C to quit, Ctrl+N to skip): "
+    max_y, max_x = bottom_win.win.getmaxyx()
+    
     while True:
         feed_scroll_idx = 0
         selected_option = ""
         cursor_pos = 0  # Tracks cursor position in the input string
+        
         while True:
             message_win.display_feeds(feeds, feed_scroll_idx)
-            bottom_win.print(prompt + selected_option)
-            bottom_win.win.move(0, len(prompt) + cursor_pos + 1)
-            bottom_win.win.refresh()
+            
+            # Calculate available space for input
+            available_width = max_x - len(prompt)
+            
+            # Handle text scrolling if input exceeds width
+            display_start = 0
+            if cursor_pos >= available_width:
+                display_start = cursor_pos - available_width + 1
+            
+            # Display visible portion of input
+            visible_text = selected_option[display_start:display_start + available_width]
+            bottom_win.print(prompt + visible_text)
+            
+            # Calculate cursor screen position and show cursor
+            screen_cursor = cursor_pos - display_start
+            if screen_cursor >= 0:
+                curses.curs_set(2)  # Show cursor with high visibility
+                bottom_win.win.move(0, len(prompt) + screen_cursor)
+                bottom_win.win.refresh()
+                curses.curs_set(1)  # Set back to normal visibility
+            
             ch = bottom_win.getch()
             
-            if ch == curses.KEY_DOWN and feed_scroll_idx < len(feeds.items()) - 1:  # Scroll down
+            # Navigation and input handling
+            if ch == curses.KEY_DOWN and feed_scroll_idx < len(feeds) - 1:
                 feed_scroll_idx += 1
-            elif ch == curses.KEY_UP and feed_scroll_idx > 0:  # Scroll up
+            elif ch == curses.KEY_UP and feed_scroll_idx > 0:
                 feed_scroll_idx -= 1
             elif ch in (curses.KEY_LEFT, 452) and cursor_pos > 0:
-                cursor_pos -= 1  # Move cursor left
+                cursor_pos -= 1
             elif ch in (curses.KEY_RIGHT, 454) and cursor_pos < len(selected_option):
-                cursor_pos += 1  # Move cursor right
-            elif ch == ord('\n'):  # Newline
+                cursor_pos += 1
+            elif ch == ord('\n'):
                 break
-            elif ch in (curses.KEY_BACKSPACE, 127, '\b', 546):  # Backspace
-                if cursor_pos > 0:
-                    # Remove the character before the cursor
-                    selected_option = selected_option[:cursor_pos - 1] + selected_option[cursor_pos:]
-                    cursor_pos -= 1
-            elif ch == curses.KEY_RESIZE:  # Resize
+            elif ch in (curses.KEY_BACKSPACE, 127, '\b', 546, 8) and cursor_pos > 0:
+                selected_option = selected_option[:cursor_pos - 1] + selected_option[cursor_pos:]
+                cursor_pos -= 1
+            elif ch == curses.KEY_RESIZE:
                 setup_windows.stdscr.clear()
                 setup_windows.stdscr.refresh()
+                max_y, max_x = bottom_win.win.getmaxyx()
                 setup_windows()
                 feed_scroll_idx = 0
             elif ch == 14:  # Ctrl+N
+                curses.curs_set(0)  # Hide cursor before returning
                 return None
-            elif ch not in (curses.KEY_UP, curses.KEY_DOWN, curses.KEY_LEFT, 452, curses.KEY_RIGHT, 454, ord('\n'), curses.KEY_BACKSPACE, 127, '\b'):
+            elif ch >= 32 and len(selected_option) < max_x * 3:  # Limit total input length
                 selected_option = selected_option[:cursor_pos] + chr(ch) + selected_option[cursor_pos:]
                 cursor_pos += 1
-            else:
-                continue
-        if selected_option.isdigit() and selected_option in feeds:
-            # Valid feed number
-            return feeds[selected_option]['url']
+            
+            # Ensure cursor position is within bounds
+            cursor_pos = max(0, min(cursor_pos, len(selected_option)))
+
+        # Check if the selected option is a valid feed number or URLs
+        if selected_option.isdigit() and int(selected_option) in feeds:
+            curses.curs_set(0)  # Hide cursor before returning
+            return feeds[int(selected_option)]['url']
         
         elif selected_option:
-            # Either a single URL or multiple URLs
             urls = [url.strip() for url in selected_option.split(',')]
             feeds = add_feeds(feeds, urls)
