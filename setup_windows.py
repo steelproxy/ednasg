@@ -13,6 +13,7 @@ def setup_windows():
     
     # Initialize the bottom window
     bottom_win.win = curses.newwin(1, term_width, term_height - 1, 0)
+    bottom_win.win.scrollok(False)  # Prevent line wrapping
     
     # Enable keypad input for both windows
     bottom_win.win.keypad(1)
