@@ -6,12 +6,14 @@ from jsonschema import validate, ValidationError
 from keyring.backends.Windows import WinVaultKeyring
 
 CONFIG_FILE = 'rss_feeds.json'
+SERVICE_ID = "ednasg"
+KEY_ID = "api_key"
 
-# Define a schema for the RSS feed configuration
-feed_schema = {
+# Define schema for RSS feed configuration
+FEED_SCHEMA = {
     "type": "object",
     "patternProperties": {
-        "^[0-9]+$": {  # The keys are numbers as strings
+        "^[0-9]+$": {
             "type": "object",
             "properties": {
                 "url": {"type": "string", "format": "uri"},
@@ -24,69 +26,73 @@ feed_schema = {
 }
 
 def load_config():
-    """Load and validate the configuration file, or return an empty dictionary."""
-    if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, 'r') as f:
-                feeds = json.load(f)
-                validate(instance=feeds, schema=feed_schema)  # Validate the JSON against the schema
-                return feeds
-        except (json.JSONDecodeError, ValidationError, ValueError) as e:
-            bottom_win.print(f"Configuration error: {e}. Press any key to reset...")
-            bottom_win.getch()
-            return {}
-        except Exception as e:
-            bottom_win.print(f"Unexpected error: {e}. Press any key to continue...")
-            bottom_win.getch()
-            return {}
-    return {}
+    """Load and validate the configuration file."""
+    if not os.path.exists(CONFIG_FILE):
+        return {}
+        
+    try:
+        with open(CONFIG_FILE, 'r') as f:
+            feeds = json.load(f)
+            validate(instance=feeds, schema=FEED_SCHEMA)
+            return feeds
+    except (json.JSONDecodeError, ValidationError) as e:
+        bottom_win.print(f"Configuration error: {e}. Press any key to reset...")
+        bottom_win.getch()
+        return {}
+    except Exception as e:
+        bottom_win.print(f"Unexpected error: {e}. Press any key to continue...")
+        bottom_win.getch()
+        return {}
 
 def update_config(url, nickname):
-    """Update the configuration file with a new URL and nickname."""
+    """Add a new feed to the configuration."""
     try:
-        feeds = load_config()  # Load and validate existing config
-        if not any(feed['url'] == url for feed in feeds.values()):
-            new_key = str(len(feeds) + 1)
-            feeds[new_key] = {"url": url, "nickname": nickname}
-            validate(instance=feeds, schema=feed_schema)  # Validate the updated data
-            with open(CONFIG_FILE, 'w') as f:
-                json.dump(feeds, f, indent=4)
-        else:
+        feeds = load_config()
+        
+        # Check for duplicate URLs
+        if any(feed['url'] == url for feed in feeds.values()):
             bottom_win.print("URL already exists in the configuration.")
+            return feeds
+            
+        # Add new feed
+        new_key = str(len(feeds) + 1)
+        feeds[new_key] = {"url": url, "nickname": nickname}
+        validate(instance=feeds, schema=FEED_SCHEMA)
+        
+        # Save updated config
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(feeds, f, indent=4)
+            
+        return feeds
+        
     except ValidationError as e:
         bottom_win.print(f"Invalid data format: {e}")
     except Exception as e:
         bottom_win.print(f"Error updating configuration: {e}")
     
-    return feeds
+    return load_config()  # Return current config if update failed
 
 def get_api_key():
-    """Fetch the OpenAI API key from the system keyring or prompt the user to enter it."""
+    """Fetch or prompt for OpenAI API key."""
     if os.name == 'nt':
         keyring.set_keyring(WinVaultKeyring())
     
-    service_id = "ednasg"
-    key_id = "api_key"
-    api_key = keyring.get_password(service_id, key_id)
+    api_key = keyring.get_password(SERVICE_ID, KEY_ID)
     
-    if api_key is None:
-        while not api_key:
-            bottom_win.print("Enter OpenAI API Key: ")
-            api_key = bottom_win.getstr()
-    
-    # Store the key if it was newly entered
-    if api_key:
-        keyring.set_password(service_id, key_id, api_key)
+    # Prompt for key if not found
+    if not api_key:
+        api_key = bottom_win.getstr("Enter OpenAI API Key: ")
+        if api_key:
+            keyring.set_password(SERVICE_ID, KEY_ID, api_key)
     
     return api_key
 
 def load_or_create_config():
-    """Load or create a configuration file if it doesn't exist."""
+    """Initialize configuration file if needed."""
     feeds = load_config()
     
     if not feeds:
-        bottom_win.print("No valid configuration found. Press any key to create a new one...")
-        bottom_win.getch()
+        bottom_win.print("No valid configuration found. Creating new config...")
         with open(CONFIG_FILE, 'w') as f:
             json.dump({}, f, indent=4)
     
