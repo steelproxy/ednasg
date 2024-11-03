@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ednasg",
-    version="0.1",
+    version="0.3",
     author="Collin Rodes",
     author_email="steelproxy@protonmail.com",
     description="A Python program to generate news scripts from RSS feeds using OpenAI.",
@@ -11,10 +11,11 @@ setup(
         "feedparser",
         "openai",
         "keyring",
+        "jsonschema",
     ],
     entry_points={
         'console_scripts': [
-            'rss-news-script-generator=main:main',  # Adjust 'main' if your file name is different
+            'ednasg=ednasg:main',
         ],
     },
     classifiers=[
