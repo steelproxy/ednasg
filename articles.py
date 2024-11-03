@@ -14,11 +14,14 @@ def get_manual_article():
 
 def get_rss_articles(rss_url):
     """Fetch and parse articles from RSS feed."""
-    bottom_win.print("Fetching RSS feed...")
+    message_win.win.erase()
+    message_win.print("Fetching RSS feed...")
     try:
         feed = _fetch_and_validate_feed(rss_url)
         if feed is None:
             return None
+        message_win.print("RSS feed fetched successfully.")
+        time.sleep(2)
             
         articles = _extract_articles(feed)
         if not articles:
@@ -38,7 +41,7 @@ def _display_articles(articles, start_idx):
     max_lines = height - 1
     max_width = width - 2
 
-    message_win.win.clear()
+    message_win.win.erase()
     message_win.win.addstr(0, 0, "Available Articles:")
     
     for idx, line_number in _get_visible_articles(articles, start_idx, max_lines):
@@ -57,7 +60,7 @@ def _display_articles(articles, start_idx):
 def _get_article_title():
     """Get article title from user."""
     def resize_callback():
-        message_win.clear()
+        message_win.win.erase()
         message_win.print("Manual input selected.")
         return None
     
@@ -160,12 +163,12 @@ def _parse_article_selection(choices, max_len):
 # Error Handling Functions
 def _handle_no_articles():
     """Handle case when no articles are found."""
-    bottom_win.print("No articles found in the RSS feed.")
+    message_win.print("No articles found in the RSS feed.")
     time.sleep(2)
 
 def _handle_feed_error(error):
     """Handle feed parsing errors."""
-    bottom_win.print(f"Error fetching RSS feed: {error}.")
+    message_win.print(f"Error fetching RSS feed: {error}.")
     time.sleep(2)
 
 def _handle_invalid_selection():
