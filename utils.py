@@ -42,11 +42,15 @@ def signal_handler(sig, frame):  # Handle program termination
 
 def update_repo():  # Update code from GitHub
     """Run the update script to fetch the latest code from GitHub."""
-    try:
-        subprocess.run(["git", "--version"], 
-                      check=True, capture_output=True)  # Verify git installation
-        subprocess.run(["git", "pull"], check=True)     # Pull latest changes
-        message_win.print("Repository updated successfully.")
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        message_win.print("Git not found in PATH. Skipping update...")
-        message_win.print("Proceeding with the current version...")
+        # determine if application is a script file or frozen exe
+    if getattr(sys, 'frozen', False):
+        return # TODO: add binary updater 
+    else:
+        try:
+            subprocess.run(["git", "--version"], 
+                        check=True, capture_output=True)  # Verify git installation
+            subprocess.run(["git", "pull"], check=True)     # Pull latest changes
+            message_win.print("Repository updated successfully.")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            message_win.print("Git not found in PATH. Skipping update...")
+            message_win.print("Proceeding with the current version...")

@@ -28,10 +28,12 @@ FEED_SCHEMA = {
 
 def load_config():
     """Load and validate the configuration file."""
+    
+    config_path = _get_config_path()
     try:
-        if not os.path.exists(CONFIG_FILE): # Check if config file exists
+        if not os.path.exists(config_path): # Check if config file exists
             _handle_no_config()
-        with open(CONFIG_FILE, 'r') as f: # Open config file
+        with open(config_path, 'r') as f: # Open config file
             feeds = json.load(f) # Load config
             validate(instance=feeds, schema=FEED_SCHEMA) # Validate config
             return feeds
@@ -58,7 +60,7 @@ def update_config(url, nickname):
         validate(instance=feeds, schema=FEED_SCHEMA) # Validate config
         
         # Save updated config
-        with open(CONFIG_FILE, 'w') as f:
+        with open(_get_config_path(), 'w') as f:
             json.dump(feeds, f, indent=4)
             
         return feeds
@@ -89,10 +91,19 @@ def get_api_key():
 
 # Helpers
 
+def _get_config_path():
+    # determine if application is a script file or frozen exe
+    if getattr(sys, 'frozen', False):
+        application_path = os.path.dirname(sys.executable)
+    elif __file__:
+        application_path = os.path.dirname(__file__)
+
+    return os.path.join(application_path, CONFIG_FILE)
+
 def _handle_no_config():
     """Handle no configuration found."""
     bottom_win.print("No valid configuration found. Creating new config...")
-    with open(CONFIG_FILE, 'w') as f:
+    with open(_get_config_path(), 'w') as f:
         json.dump({}, f, indent=4)
 
 def _handle_json_error(e):
