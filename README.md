@@ -12,7 +12,7 @@ A Python application that fetches articles from RSS feeds and generates a news a
 
 ## Requirements
 
-- Python 3.6 or later
+- Python 3.12 or later
 - An OpenAI API key (for ChatGPT usage)
 
 ## Installation
