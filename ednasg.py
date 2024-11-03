@@ -60,7 +60,7 @@ def _initialize_api():
 def _initialize_config():
     """Initialize feed configuration."""
     message_win.print("Loading RSS config...")
-    feeds = config.load_or_create_config()
+    feeds = config.load_config()
     _display_welcome_message()
     return feeds
 

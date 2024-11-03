@@ -2,6 +2,7 @@ import keyring
 import json
 import os
 import bottom_win
+import sys
 from jsonschema import validate, ValidationError
 from keyring.backends.Windows import WinVaultKeyring
 
@@ -27,28 +28,25 @@ FEED_SCHEMA = {
 
 def load_config():
     """Load and validate the configuration file."""
-    if not os.path.exists(CONFIG_FILE):
-        return {}
-        
     try:
-        with open(CONFIG_FILE, 'r') as f:
-            feeds = json.load(f)
-            validate(instance=feeds, schema=FEED_SCHEMA)
+        if not os.path.exists(CONFIG_FILE): # Check if config file exists
+            _handle_no_config()
+        with open(CONFIG_FILE, 'r') as f: # Open config file
+            feeds = json.load(f) # Load config
+            validate(instance=feeds, schema=FEED_SCHEMA) # Validate config
             return feeds
-    except (json.JSONDecodeError, ValidationError) as e:
-        bottom_win.print(f"Configuration error: {e}. Press any key to reset...")
-        bottom_win.getch()
-        return {}
+    except (json.JSONDecodeError, ValidationError) as e: # Handle JSON errors
+        _handle_json_error(e)
+        _handle_exit()
     except Exception as e:
-        bottom_win.print(f"Unexpected error: {e}. Press any key to continue...")
-        bottom_win.getch()
-        return {}
+        _handle_error(e)
+        _handle_exit()
+
 
 def update_config(url, nickname):
     """Add a new feed to the configuration."""
+    feeds = load_config() # Load config, no need to catch errors, will exit if error
     try:
-        feeds = load_config()
-        
         # Check for duplicate URLs
         if any(feed['url'] == url for feed in feeds.values()):
             bottom_win.print("URL already exists in the configuration.")
@@ -57,7 +55,7 @@ def update_config(url, nickname):
         # Add new feed
         new_key = str(len(feeds) + 1)
         feeds[new_key] = {"url": url, "nickname": nickname}
-        validate(instance=feeds, schema=FEED_SCHEMA)
+        validate(instance=feeds, schema=FEED_SCHEMA) # Validate config
         
         # Save updated config
         with open(CONFIG_FILE, 'w') as f:
@@ -66,11 +64,13 @@ def update_config(url, nickname):
         return feeds
         
     except ValidationError as e:
-        bottom_win.print(f"Invalid data format: {e}")
+        _handle_json_error(e)
+        return load_config()  # Return current config if update failed
     except Exception as e:
-        bottom_win.print(f"Error updating configuration: {e}")
+        _handle_error(e) 
+        return load_config()  # Return current config if update failed
     
-    return load_config()  # Return current config if update failed
+    
 
 def get_api_key():
     """Fetch or prompt for OpenAI API key."""
@@ -87,13 +87,27 @@ def get_api_key():
     
     return api_key
 
-def load_or_create_config():
-    """Initialize configuration file if needed."""
-    feeds = load_config()
-    
-    if not feeds:
-        bottom_win.print("No valid configuration found. Creating new config...")
-        with open(CONFIG_FILE, 'w') as f:
-            json.dump({}, f, indent=4)
-    
-    return feeds
+# Helpers
+
+def _handle_no_config():
+    """Handle no configuration found."""
+    bottom_win.print("No valid configuration found. Creating new config...")
+    with open(CONFIG_FILE, 'w') as f:
+        json.dump({}, f, indent=4)
+
+def _handle_json_error(e):
+    """Handle JSON error."""
+    bottom_win.print(f"JSON error: {e}. Press any key to continue...")
+    bottom_win.getch()
+    return {}
+
+def _handle_error(e):
+    """Handle unexpected error."""
+    bottom_win.print(f"Unexpected error: {e}. Press any key to continue...")
+    bottom_win.getch()
+    return {}
+
+def _handle_exit():
+    """Handle exit."""
+    bottom_win.print("Exiting due to fatal error...")
+    sys.exit()
