@@ -17,6 +17,9 @@ A Python application that fetches articles from RSS feeds and generates a news a
 
 ## Installation
 
+### READ THIS
+If you would prefer to skip these steps you can download the binary releases on the release page. Simply click and run, otherwise continue reading.
+
 ### 1. Clone the Repository
 
 ```bash
