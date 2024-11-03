@@ -68,7 +68,6 @@ def _initialize_config():
 def _get_article_content(feeds):
     """Get articles either from RSS or manual input."""
     rss_url = rss_feeds.get_rss_urls(feeds)
-    
     if rss_url is None:  # Manual input
         return articles.get_manual_article()
     
@@ -78,6 +77,7 @@ def _get_article_content(feeds):
             return selected_articles
             
         rss_url = rss_feeds.get_rss_urls(feeds)
+        feeds = config.load_config() # Reload config after adding new feeds
         if rss_url is None:  # User chose manual input
             return articles.get_manual_article()
 

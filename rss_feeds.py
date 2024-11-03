@@ -78,9 +78,9 @@ def get_rss_urls(feeds):
             return None
             
         feed_url = handle_feed_input(selected_option, feeds)
-        feeds = config.load_config() # Reload config after adding new feeds
         if feed_url:
             return feed_url
+        feeds = config.load_config() # Reload config after adding new feeds
 
 def handle_feed_input(selected_option, feeds):
     """Process the selected option and determine if it's a valid feed number or add new URLs."""

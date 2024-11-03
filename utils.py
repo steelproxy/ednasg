@@ -9,7 +9,7 @@ import re
 URL_PATTERN = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$'
 CTRL_D = 4
 CTRL_N = 14
-BACKSPACE_KEYS = (curses.KEY_BACKSPACE, 127, '\b', 546, 8)
+BACKSPACE_KEYS = (curses.KEY_BACKSPACE, 127, '\b', 8)
 ARROW_LEFT = (curses.KEY_LEFT, 452)
 ARROW_RIGHT = (curses.KEY_RIGHT, 454)
 
