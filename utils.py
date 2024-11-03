@@ -58,10 +58,11 @@ def update_repo():
             message_win.print("Git not found in PATH. Skipping update...")
             message_win.print("Proceeding with the current version...")
             return
-    try:
-        # Git pull to get latest code
-        subprocess.run(["git", "pull"], check=True)
-        message_win.print("Repository updated successfully.")
-    except subprocess.CalledProcessError as e:
-        message_win.print(f"Failed to update repository: {e}")
-        message_win.print("Proceeding with the current version...")
+    else:  # Unix
+        try:
+            # Git pull to get latest code
+            subprocess.run(["git", "pull"], check=True)
+            message_win.print("Repository updated successfully.")
+        except subprocess.CalledProcessError as e:
+            message_win.print(f"Failed to update repository: {e}")
+            message_win.print("Proceeding with the current version...")

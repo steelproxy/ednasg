@@ -78,6 +78,7 @@ def get_rss_urls(feeds):
             return None
             
         feed_url = handle_feed_input(selected_option, feeds)
+        feeds = config.load_config() # Reload config after adding new feeds
         if feed_url:
             return feed_url
 
@@ -111,13 +112,15 @@ def add_single_feed(url, feeds):
         return feeds
 
     nickname = get_feed_nickname(url, feeds)
-    return config.update_config(url, nickname)
+    updated_config = config.update_config(url, nickname)
+    bottom_win.print(f"Added feed '{url}' with nickname '{nickname}'.")
+    time.sleep(2)
+    return updated_config
 
 def add_multiple_feeds(urls, feeds):
     """Process and add multiple feed URLs."""
     for url in urls:
         feeds = add_single_feed(url.strip(), feeds)
-        time.sleep(2)  # Short delay to prevent rapid input issues
     return feeds
 
 def get_feed_nickname(url, feeds):

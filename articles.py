@@ -139,12 +139,12 @@ def _extract_articles(feed):
 
 def _handle_no_articles():
     """Handle case when no articles are found."""
-    message_win.print("No articles found in the RSS feed.")
+    bottom_win.print("No articles found in the RSS feed.")
     time.sleep(2)
 
 def _handle_feed_error(error):
     """Handle feed parsing errors."""
-    message_win.print(f"Error fetching RSS feed: {error}.")
+    bottom_win.print(f"Error fetching RSS feed: {error}.")
     time.sleep(2)
 
 # Helper Functions - Selection
