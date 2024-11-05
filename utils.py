@@ -52,7 +52,6 @@ def update_repo():  # Update code from GitHub
     # determine if application is a script file or frozen exe
     if getattr(sys, 'frozen', False):
         try:
-
             # Get current executable path and version
             current_exe = sys.executable
             current_version = version.parse(APP_VERSION)
@@ -87,17 +86,39 @@ def update_repo():  # Update code from GitHub
             
             # Save to temporary file
             import tempfile
-            temp_path = tempfile.mktemp()
+            temp_dir = tempfile.mkdtemp()
+            temp_path = os.path.join(temp_dir, 'update.exe')
+            
             with open(temp_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
-                    
-            # Replace current executable
-            os.replace(temp_path, current_exe)
-            message_win.print("Update complete! Please restart the application.")
+            
+            # Create batch script to replace exe after this process exits
+            batch_path = os.path.join(temp_dir, 'update.bat')
+            with open(batch_path, 'w') as f:
+                f.write('@echo off\n')
+                f.write(':wait\n')
+                f.write(f'tasklist | find /i "{os.path.basename(current_exe)}" >nul\n')
+                f.write('if errorlevel 1 (\n')
+                f.write(f'  move /y "{temp_path}" "{current_exe}"\n')
+                f.write('  rmdir /s /q "%~dp0"\n')
+                f.write('  exit\n')
+                f.write(') else (\n')
+                f.write('  timeout /t 1 /nobreak >nul\n')
+                f.write('  goto wait\n')
+                f.write(')\n')
+            
+            # Launch updater script and exit
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            subprocess.Popen(['cmd', '/c', batch_path], 
+                           startupinfo=startupinfo,
+                           creationflags=subprocess.CREATE_NEW_CONSOLE)
+            message_win.print("Update downloaded! Restarting application...")
+            sys.exit(0)
             
         except Exception as e:
-            message_win.print(f"Unexpected exception occured while updating: {e}")
+            message_win.print(f"Unexpected exception occurred while updating: {e}")
             message_win.print("Proceeding with current version...")
     else:
         try:
