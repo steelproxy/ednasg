@@ -4,6 +4,13 @@ import subprocess
 import sys
 import message_win
 import re
+import requests
+import platform
+from packaging import version
+
+APP_NAME = "ednasg"
+APP_VERSION = "v0.4"
+APP_REPO = "https://api.github.com/repos/steelproxy/ednasg/releases/latest"
 
 # Constants
 URL_PATTERN = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$'  # Pattern for validating URLs
@@ -42,9 +49,56 @@ def signal_handler(sig, frame):  # Handle program termination
 
 def update_repo():  # Update code from GitHub
     """Run the update script to fetch the latest code from GitHub."""
-        # determine if application is a script file or frozen exe
+    # determine if application is a script file or frozen exe
     if getattr(sys, 'frozen', False):
-        return # TODO: add binary updater 
+        try:
+
+            # Get current executable path and version
+            current_exe = sys.executable
+            current_version = version.parse(APP_VERSION)
+            system = platform.system().lower()
+            
+            # Get latest release from GitHub
+            response = requests.get(APP_REPO)
+            if response.status_code != 200:
+                raise Exception("Failed to fetch release info")
+                
+            release_data = response.json()
+            latest_version = version.parse(release_data['tag_name'].lstrip('v'))
+            
+            # Check if update is needed
+            if latest_version <= current_version:
+                message_win.print(f"Already running latest version {current_version}")
+                return
+                
+            # Find matching asset for current platform
+            asset = None
+            for a in release_data['assets']:
+                if system in a['name'].lower():
+                    asset = a
+                    break
+                    
+            if not asset:
+                raise Exception(f"No release found for {system}")
+                
+            # Download new version
+            message_win.print(f"Downloading update {latest_version}...")
+            response = requests.get(asset['browser_download_url'], stream=True)
+            
+            # Save to temporary file
+            import tempfile
+            temp_path = tempfile.mktemp()
+            with open(temp_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+                    
+            # Replace current executable
+            os.replace(temp_path, current_exe)
+            message_win.print("Update complete! Please restart the application.")
+            
+        except Exception as e:
+            message_win.print(f"Unexpected exception occured while updating: {e}")
+            message_win.print("Proceeding with current version...")
     else:
         try:
             subprocess.run(["git", "--version"], 
