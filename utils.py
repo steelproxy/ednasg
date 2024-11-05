@@ -54,3 +54,5 @@ def update_repo():  # Update code from GitHub
         except (subprocess.CalledProcessError, FileNotFoundError):
             message_win.print("Git not found in PATH. Skipping update...")
             message_win.print("Proceeding with the current version...")
+        except Exception as e:
+            message_win.print(f"Unexpected exception occured while updating: {e}")
