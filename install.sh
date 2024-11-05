@@ -30,6 +30,7 @@ source venv/bin/activate
 
 # Create requirements.txt if it doesn't exist
 cat <<EOL > requirements.txt
+jsonschema
 feedparser
 openai
 keyring
