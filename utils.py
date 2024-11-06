@@ -9,7 +9,7 @@ import platform
 from packaging import version
 
 APP_NAME = "ednasg"
-APP_VERSION = "v0.4"
+APP_VERSION = "v0.5"
 APP_REPO = "https://api.github.com/repos/steelproxy/ednasg/releases/latest"
 
 # Constants

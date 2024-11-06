@@ -98,10 +98,12 @@ def _extract_articles(feed):
 def _select_articles(articles):
     """Let user select articles from the list."""
     article_scroll_idx = 0
+    filtered_articles = articles  # New: Keep track of filtered articles
+    search_term = ""  # New: Keep track of current search term
     
     def scroll_down():
         nonlocal article_scroll_idx
-        if article_scroll_idx < len(articles) - 1:
+        if article_scroll_idx < len(filtered_articles) - 1:  # Changed: Use filtered_articles
             article_scroll_idx += 1
         return None
         
@@ -115,20 +117,55 @@ def _select_articles(articles):
         nonlocal article_scroll_idx
         article_scroll_idx = 0
         return None
+
+    def search_callback():  # New: Handle search functionality
+        nonlocal filtered_articles, article_scroll_idx, search_term
+        search_term = bottom_win.handle_input(
+            "Search: ",
+            lambda: _display_articles(filtered_articles, article_scroll_idx),
+            max_input_len=100,
+            hotkeys={
+                curses.KEY_DOWN: (scroll_down, "Scroll down"),
+                curses.KEY_UP: (scroll_up, "Scroll up"),
+                curses.KEY_RESIZE: (resize_callback, "Resize"),
+            }
+        )
+        article_scroll_idx = 0
+        if search_term:
+            filtered_articles = [
+                article for article in articles
+                if search_term.lower() in article['title'].lower()
+            ]
+        else:
+            filtered_articles = articles
+        return None
     
     choices = bottom_win.handle_input(
-        "Enter the numbers of articles to include (comma-separated): ",
-        lambda: _display_articles(articles, article_scroll_idx),
+        "Enter the numbers of articles to include (comma-separated) [ / to search]: ",
+        lambda: _display_articles(filtered_articles, article_scroll_idx),  # Changed: Use filtered_articles
         max_input_len=100,
         hotkeys={
             curses.KEY_DOWN: (scroll_down, "Scroll down"),
             curses.KEY_UP: (scroll_up, "Scroll up"),
-            curses.KEY_RESIZE: (resize_callback, "Resize")
+            curses.KEY_RESIZE: (resize_callback, "Resize"),
+            ord('/'): (search_callback, "Search"),  # New: Add search hotkey
         }
     )
     
-    selected_indices = _parse_article_selection(choices, len(articles))
-    return [articles[i] for i in selected_indices] if selected_indices else None
+    selected_indices = _parse_article_selection(choices, len(filtered_articles))  # Changed: Use filtered_articles length
+    if not selected_indices:
+        return None
+        
+    # New: Map filtered indices back to original article indices
+    if filtered_articles != articles:
+        original_indices = []
+        for filtered_idx in selected_indices:
+            filtered_article = filtered_articles[filtered_idx]
+            original_idx = articles.index(filtered_article)
+            original_indices.append(original_idx)
+        selected_indices = original_indices
+        
+    return [articles[i] for i in selected_indices]
 
 # Helper Functions
 def _get_visible_articles(articles, start_idx, max_lines):
