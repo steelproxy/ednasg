@@ -52,71 +52,7 @@ def update_repo():  # Update code from GitHub
     # determine if application is a script file or frozen exe
     if getattr(sys, 'frozen', False):
         try:
-            # Get current executable path and version
-            current_exe = sys.executable
-            current_version = version.parse(APP_VERSION)
-            system = platform.system().lower()
-            
-            # Get latest release from GitHub
-            response = requests.get(APP_REPO)
-            if response.status_code != 200:
-                raise Exception("Failed to fetch release info")
-                
-            release_data = response.json()
-            latest_version = version.parse(release_data['tag_name'].lstrip('v'))
-            
-            # Check if update is needed
-            if latest_version <= current_version:
-                message_win.print(f"Already running latest version {current_version}")
-                return
-                
-            # Find matching asset for current platform
-            asset = None
-            for a in release_data['assets']:
-                if system in a['name'].lower():
-                    asset = a
-                    break
-                    
-            if not asset:
-                raise Exception(f"No release found for {system}")
-                
-            # Download new version
-            message_win.print(f"Downloading update {latest_version}...")
-            response = requests.get(asset['browser_download_url'], stream=True)
-            
-            # Save to temporary file
-            import tempfile
-            temp_dir = tempfile.mkdtemp()
-            temp_path = os.path.join(temp_dir, 'update.exe')
-            
-            with open(temp_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            
-            # Create batch script to replace exe after this process exits
-            batch_path = os.path.join(temp_dir, 'update.bat')
-            with open(batch_path, 'w') as f:
-                f.write('@echo off\n')
-                f.write(':wait\n')
-                f.write(f'tasklist | find /i "{os.path.basename(current_exe)}" >nul\n')
-                f.write('if errorlevel 1 (\n')
-                f.write(f'  move /y "{temp_path}" "{current_exe}"\n')
-                f.write('  rmdir /s /q "%~dp0"\n')
-                f.write('  exit\n')
-                f.write(') else (\n')
-                f.write('  timeout /t 1 /nobreak >nul\n')
-                f.write('  goto wait\n')
-                f.write(')\n')
-            
-            # Launch updater script and exit
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            subprocess.Popen(['cmd', '/c', batch_path], 
-                           startupinfo=startupinfo,
-                           creationflags=subprocess.CREATE_NEW_CONSOLE)
-            message_win.print("Update downloaded! Restarting application...")
-            sys.exit(0)
-            
+            _do_binary_update()
         except Exception as e:
             message_win.print(f"Unexpected exception occurred while updating: {e}")
             message_win.print("Proceeding with current version...")
@@ -131,3 +67,73 @@ def update_repo():  # Update code from GitHub
             message_win.print("Proceeding with the current version...")
         except Exception as e:
             message_win.print(f"Unexpected exception occured while updating: {e}")
+            
+def _replace_binary(temp_dir, temp_path, current_exe):
+    # Create batch script to replace exe after this process exits
+    batch_path = os.path.join(temp_dir, 'update.bat')
+    with open(batch_path, 'w') as f:
+        f.write('@echo off\n')
+        f.write(':wait\n')
+        f.write(f'tasklist | find /i "{os.path.basename(current_exe)}" >nul\n')
+        f.write('if errorlevel 1 (\n')
+        f.write(f'  move /y "{temp_path}" "{current_exe}"\n')
+        f.write('  rmdir /s /q "%~dp0"\n')
+        f.write('  exit\n')
+        f.write(') else (\n')
+        f.write('  timeout /t 1 /nobreak >nul\n')
+        f.write('  goto wait\n')
+        f.write(')\n')
+    
+    # Launch updater script and exit
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    subprocess.Popen(['cmd', '/c', batch_path], 
+                       startupinfo=startupinfo,
+                       creationflags=subprocess.CREATE_NEW_CONSOLE)
+            
+def _do_binary_update():
+    # Get current executable path and version
+    current_exe = sys.executable
+    current_version = version.parse(APP_VERSION)
+    system = platform.system().lower()
+    
+    # Get latest release from GitHub
+    response = requests.get(APP_REPO)
+    if response.status_code != 200:
+        raise Exception("Failed to fetch release info")
+        
+    release_data = response.json()
+    latest_version = version.parse(release_data['tag_name'].lstrip('v'))
+    
+    # Check if update is needed
+    if latest_version <= current_version:
+        message_win.print(f"Already running latest version {current_version}")
+        return
+        
+    # Find matching asset for current platform
+    asset = None
+    for a in release_data['assets']:
+        if system in a['name'].lower():
+            asset = a
+            break
+            
+    if not asset:
+        raise Exception(f"No release found for {system}")
+        
+    # Download new version
+    message_win.print(f"Downloading update {latest_version}...")
+    response = requests.get(asset['browser_download_url'], stream=True)
+    
+    # Save to temporary file
+    import tempfile
+    temp_dir = tempfile.mkdtemp()
+    temp_path = os.path.join(temp_dir, 'update.exe')
+    
+    with open(temp_path, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
+    
+    _replace_binary(temp_dir, temp_path, current_exe)
+    message_win.print("Update downloaded! Restarting application...")
+    sys.exit(0)
+                
