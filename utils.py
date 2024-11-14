@@ -117,6 +117,7 @@ def _do_binary_update():
     if response.status_code != 200:
         raise Exception("Failed to fetch release info")
 
+    # Parse release data
     release_data = response.json()
     latest_version = version.parse(release_data['tag_name'].lstrip('v'))
 
@@ -133,22 +134,38 @@ def _do_binary_update():
             break
 
     if not asset:
-        raise Exception(f"No release found for {system}")
+        message_win.print(f"No release was found for platform: {system}! Skipping update...")
+        return
 
     # Download new version
     message_win.print(f"Downloading update {latest_version}...")
-    response = requests.get(asset['browser_download_url'], stream=True)
+    try:
+        response = requests.get(asset['browser_download_url'], stream=True)
+        if response.status_code != 200:
+            message_win.print(f"Failed to download update! Response code: {response.status_code}. Skipping update...")
+            return
+    except requests.exceptions.RequestException as e:
+        message_win.print(f"Failed to download update! Exception occurred: {e}. Skipping update...")
+        return
 
-    # Save to temporary file
-    import tempfile
-    temp_dir = tempfile.mkdtemp()
-    temp_path = os.path.join(temp_dir, 'update.exe')
+    try:
+        # Save to temporary file
+        import tempfile
+        temp_dir = tempfile.mkdtemp()
+        temp_path = os.path.join(temp_dir, 'update.exe')
 
-    with open(temp_path, 'wb') as f:
-        for chunk in response.iter_content(chunk_size=8192):
-            f.write(chunk)
+        with open(temp_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
 
-    _replace_binary(temp_dir, temp_path, current_exe)
+        if os.system == "nt":
+            _replace_binary(temp_dir, temp_path, current_exe)
+        else:
+            os.replace(temp_path, current_exe)
+    except Exception as e:
+        message_win.print(f"Failed to download update! Exception occurred: {e}. Skipping update...")
+        return
+        
     message_win.print("Update downloaded! Restarting application...")
     sys.exit(0)
 
