@@ -7,6 +7,7 @@ import re
 import requests
 import platform
 import bottom_win
+import shutil
 from packaging import version
 
 APP_NAME = "ednasg"
@@ -139,16 +140,26 @@ def _do_binary_update():
     message_win.print(f"Downloading update {latest_version}...")
     response = requests.get(asset['browser_download_url'], stream=True)
 
+
     # Save to temporary file
     import tempfile
     temp_dir = tempfile.mkdtemp()
-    temp_path = os.path.join(temp_dir, 'update.exe')
+    temp_path = os.path.join(temp_dir, 'update.exe' if os.name == 'nt' else 'update')
 
     with open(temp_path, 'wb') as f:
         for chunk in response.iter_content(chunk_size=8192):
             f.write(chunk)
 
-    _replace_binary(temp_dir, temp_path, current_exe)
+    if os.name == 'nt':
+        _replace_binary(temp_dir, temp_path, current_exe)
+    else:
+        # Make temp file executable
+        os.chmod(temp_path, 0o755)
+        # Directly overwrite current executable
+        with open(temp_path, 'rb') as src, open(current_exe, 'wb') as dst:
+            dst.write(src.read())
+        # Clean up temp directory
+        shutil.rmtree(temp_dir)
     message_win.print("Update downloaded! Restarting application...")
     sys.exit(0)
 
