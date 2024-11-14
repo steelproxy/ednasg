@@ -22,11 +22,11 @@ fi
 
 # Create a virtual environment
 echo "Creating a virtual environment..."
-python3 -m venv venv
+python3 -m venv .venv
 
 # Activate the virtual environment
 echo "Activating the virtual environment..."
-source venv/bin/activate
+source .venv/bin/activate
 
 # Create requirements.txt if it doesn't exist
 cat <<EOL > requirements.txt
@@ -34,6 +34,8 @@ jsonschema
 feedparser
 openai
 keyring
+requests
+packaging
 EOL
 
 # Install required packages
@@ -42,7 +44,6 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 # Print completion message
-echo "Installation complete! Your virtual environment is ready."
+echo "Installation complete! Your virtual environment is active."
 echo "You can run your program now!"
-echo "Run these commands: source venv/bin/activate"
-echo "                    python ./ednasg.py"
+echo "Run these commands: python ./ednasg.py"

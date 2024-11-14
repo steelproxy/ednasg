@@ -3,3 +3,4 @@ feedparser
 openai
 keyring
 requests
+packaging
