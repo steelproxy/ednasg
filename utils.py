@@ -18,6 +18,7 @@ APP_REPO = "https://api.github.com/repos/steelproxy/ednasg/releases/latest"
 URL_PATTERN = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$'
 CTRL_D = 4                                           # ASCII value for Ctrl+D
 CTRL_N = 14                                          # ASCII value for Ctrl+N
+CTRL_O = 15                                          # ASCII value for Ctrl+O
 BACKSPACE_KEYS = (curses.KEY_BACKSPACE, 127, '\b',
                   8)  # Various backspace key codes
 ARROW_LEFT = (curses.KEY_LEFT, 452)                    # Left arrow key codes

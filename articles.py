@@ -3,6 +3,8 @@ import curses
 import feedparser
 import bottom_win
 import message_win
+import utils
+from oxylabs import oxylabs_search
 
 # Main Public Functions
 def get_manual_article():
@@ -15,24 +17,28 @@ def get_manual_article():
 def get_rss_articles(rss_url):
     """Fetch and parse articles from RSS feed."""
     message_win.win.erase()
-    message_win.print("Fetching RSS feed...")
-    try:
-        feed = _fetch_and_validate_feed(rss_url)
-        if feed is None:
-            return None
-        message_win.print("RSS feed fetched successfully.")
-        time.sleep(2)
+    if rss_url != utils.CTRL_O:
+        message_win.print("Fetching RSS feed...")
+        try:
+            feed = _fetch_and_validate_feed(rss_url)
+            if feed is None:
+                return None
+            message_win.print("RSS feed fetched successfully.")
+            time.sleep(2)
+                
+            articles = _extract_articles(feed)
+            if not articles:
+                _handle_no_articles()
+                return None
+                
+            return _select_articles(articles)
             
-        articles = _extract_articles(feed)
-        if not articles:
-            _handle_no_articles()
+        except Exception as e:
+            _handle_feed_error(e)
             return None
+    else:
+        return _select_articles({})
             
-        return _select_articles(articles)
-        
-    except Exception as e:
-        _handle_feed_error(e)
-        return None
 
 # Display Functions
 def _display_articles(articles, start_idx):
@@ -139,6 +145,16 @@ def _select_articles(articles):
         else:
             filtered_articles = articles
         return None
+    
+    def oxylabs_callback():     # Handles Oxylabs 
+        nonlocal filtered_articles, articles
+        resize_callback()
+        filtered_articles = oxylabs_search()
+        articles = filtered_articles
+        return None
+    
+    if not filtered_articles:
+        oxylabs_callback()
     
     choices = bottom_win.handle_input(
         "Enter the numbers of articles to include (comma-separated) [ / to search]: ",

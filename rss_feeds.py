@@ -5,6 +5,7 @@ import message_win
 import config
 from screen_manager import setup_windows
 import utils
+from oxylabs import oxylabs_search
 
 # Display Functions
 def display_feeds(feeds, start_idx):  # Main function to show RSS feeds
@@ -36,11 +37,10 @@ def _display_feed_list(feeds, start_idx, max_lines, max_width):  # Helper for fe
 
 # Input Handling Functions
 def get_rss_urls(feeds):        # Main input handler for RSS URLs
-    prompt = "Select a feed number or enter URLs (Ctrl+C to quit, Ctrl+N to skip): "
+    prompt = "Select a feed number or enter URLs (Ctrl+C to quit, Ctrl+N to skip, Ctrl+O for google news): "
     feed_scroll_idx = 0
     
     def display_callback():     # Updates feed display
-        nonlocal feed_scroll_idx
         feeds = config.load_config()
         display_feeds(feeds, feed_scroll_idx)
         return None
@@ -60,23 +60,30 @@ def get_rss_urls(feeds):        # Main input handler for RSS URLs
     def skip_callback():        # Handles skip action
         return utils.CTRL_N
     
+    def oxylabs_callback():
+        return utils.CTRL_O
+    
     hotkeys = {                 # Define keyboard shortcuts
         utils.CTRL_N: (lambda: skip_callback, "break"),
         curses.KEY_DOWN: (lambda: handle_scroll(curses.KEY_DOWN), "scroll down"),
         curses.KEY_UP: (lambda: handle_scroll(curses.KEY_UP), "scroll up"),
-        curses.KEY_RESIZE: (resize_callback, "resize")
+        curses.KEY_RESIZE: (resize_callback, "resize"),
+        utils.CTRL_O: (oxylabs_callback, "oxylabs")
     }
     
     while True:
         selected_option = bottom_win.handle_input(prompt, callback=display_callback, hotkeys=hotkeys)
+        if selected_option in [utils.CTRL_N, utils.CTRL_O]:
+            return selected_option
         
         if selected_option is None:      # Handle skip action
             return None
-            
-        feeds = config.load_config()     # Refresh feed list
+        
+        display_callback()     # Refresh feed list
         feed_url = _handle_feed_input(selected_option, feeds)
         if feed_url:
             return feed_url
+        
 
 # Feed Processing Functions
 def _handle_feed_input(selected_option, feeds):    # Process user input for feeds

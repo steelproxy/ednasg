@@ -9,6 +9,8 @@ from keyring.backends.Windows import WinVaultKeyring
 CONFIG_FILE = 'rss_feeds.json'
 SERVICE_ID = "ednasg"
 KEY_ID = "api_key"
+USERNAME_ID = "oxylabs_username"
+PASSWORD_ID = "oxylabs_password"
 
 # Define schema for RSS feed configuration
 FEED_SCHEMA = {
@@ -88,6 +90,24 @@ def get_api_key():
             keyring.set_password(SERVICE_ID, KEY_ID, api_key)
     
     return api_key
+
+def get_oxylabs_credentials():
+    """Fetch or prompt for Oxylabs credentials."""
+    if os.name == 'nt':
+        keyring.set_keyring(WinVaultKeyring())
+    
+    username = keyring.get_password(SERVICE_ID, USERNAME_ID)
+    password = keyring.get_password(SERVICE_ID, PASSWORD_ID)
+    
+    if not username or not password:
+        username = bottom_win.getstr("Enter Oxylabs Username [leave blank to skip]: ")
+        if username:
+            password = bottom_win.getstr("Enter Oxylabs Password [leave blank to skip]: ")
+            if password:
+                keyring.set_password(SERVICE_ID, USERNAME_ID, username)
+                keyring.set_password(SERVICE_ID, PASSWORD_ID, password) 
+
+    return username, password
 
 # Helpers
 

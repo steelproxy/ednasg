@@ -12,7 +12,7 @@ def print(message):    # Display message in window
 
 def clear():          # Clear window contents
     """Clear the window."""
-    win.clear()
+    win.erase()
     win.refresh()
 
 def get_multiline_input(prompt, end_key=4):    # Get multi-line user input
