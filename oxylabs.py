@@ -42,20 +42,29 @@ def _format_response_to_articles(response):
         return []
     
     try:
-        # Navigate to the main results array
-        articles = response['results'][0]['content']['results']['main']
-        
-        # Transform each article to match expected format (title, summary, date)
         formatted_articles = []
-        for article in articles:
-            formatted_articles.append({
-                'title': article['title'],
-                'summary': article['desc'],
-                'date': time.localtime()  # Current time since Oxylabs only provides relative dates
-            })
+        
+        # Iterate through each page of results
+        for page_result in response['results']:
+            if ('content' in page_result and 
+                'results' in page_result['content'] and 
+                'organic' in page_result['content']['results']):
+                
+                # Get organic results for this page
+                articles = page_result['content']['results']['organic']
+                
+                # Transform each article
+                for article in articles:
+                    if 'title' in article and 'desc' in article:
+                        formatted_articles.append({
+                            'title': article['title'],
+                            'summary': article['desc'],
+                            'date': time.localtime()  # Current time since Oxylabs only provides relative dates
+                        })
         
         return formatted_articles
-    except (KeyError, IndexError):
+    except (KeyError, IndexError) as e:
+        bottom_win.print(f"Error formatting articles: {str(e)}")
         return []
     
 def _make_oxylabs_request(query, location, username, password):
@@ -66,10 +75,12 @@ def _make_oxylabs_request(query, location, username, password):
         'query': query,
         'parse': True,
         'geo_location': location,  # Location targeting
+        'limit': '100',
+        'start_page': '1',
+        'pages': '20',
         'context': [
             {'key': 'udm', 'value': 12},
             {'key': 'tbm', 'value': 'nws'},  # Ensures Google News results
-            {'key': 'limit', 'value': 100}
         ],
         'render': 'html',  # Enable JavaScript rendering (optional)
     }
@@ -83,6 +94,11 @@ def _make_oxylabs_request(query, location, username, password):
             timeout=30
         )
         response.raise_for_status()
+        if response.status_code == 429:
+            message_win.print("OxyLabs Rate limit exceeded - too many requests!")
+            bottom_win.print("Press any key to continue...")
+            bottom_win.getch()
+            return None
     except requests.exceptions.RequestException as e:
         bottom_win.print(f"Error making Oxylabs request: {str(e)}")
         return None
