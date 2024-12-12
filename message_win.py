@@ -6,8 +6,14 @@ import screen_manager
 global win
 
 def print(message):    # Display message in window
-    """Display a message in the window."""
-    win.addstr(message + '\n')
+    """Display a message in the window, truncating lines that exceed window width."""
+    max_y, max_x = win.getmaxyx()
+    if len(message) > max_x - 4:
+        message = message[:max_x - 4] + "..."
+    try:
+        win.addstr(message + '\n')
+    except curses.error:
+        return
     win.refresh()
 
 def clear():          # Clear window contents
@@ -15,6 +21,10 @@ def clear():          # Clear window contents
     win.erase()
     win.refresh()
 
+def erase():
+    """Erase the window."""
+    win.erase()
+    
 def get_multiline_input(prompt, end_key=4):    # Get multi-line user input
     """Get multiline input from the user with scroll and cursor support."""
     input_str = [""]                           # Initialize empty input
