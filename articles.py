@@ -52,14 +52,13 @@ def _display_articles(articles, start_idx):
     
     for idx, line_number in _get_visible_articles(articles, start_idx, max_lines):
         article = articles[idx]
-        title = _format_article_title(article['title'], max_width)
+        title = _format_article_title(article['title'].replace('\n', ' '), max_width)
         date_str = time.strftime("%m,%d,%y", article['date'])
         
         try:
             message_win.print(f"({date_str}) {idx + 1}. {title}")
         except curses.error:
             pass
-
 # Input Functions
 def _get_article_title():
     """Get article title from user."""
