@@ -37,7 +37,7 @@ def _display_feed_list(feeds, start_idx, max_lines, max_width):  # Helper for fe
 
 # Input Handling Functions
 def get_rss_urls(feeds):        # Main input handler for RSS URLs
-    prompt = "Select a feed number or enter URLs (Ctrl+C to quit, Ctrl+N to skip, Ctrl+O for google news): "
+    prompt = "Select a feed number or enter URL(s): "
     feed_scroll_idx = 0
     
     def display_callback():     # Updates feed display
