@@ -46,7 +46,8 @@ echo windows-curses >> requirements.txt
 echo packaging >> requirements.txt
 
 REM Create start script
-echo venv-run ednasg.py > start.bat
+echo .venv\Scripts\activate > start.bat
+echo python ednasg.py >> start.bat
 
 REM Install required packages
 echo Installing required packages...
