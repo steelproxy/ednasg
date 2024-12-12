@@ -14,10 +14,9 @@ def display_feeds(feeds, start_idx):  # Main function to show RSS feeds
     max_lines = height - 1      # Reserve space for status bar
     max_width = width - 2       # Account for side margins
 
-    message_win.win.erase()
-    message_win.win.addstr(0, 0, "Available RSS Feeds: [CTRL+C to quit, CTRL+N to input article, CTRL+O to search google news with OxyLabs, CTRL+R to reset credentials]")
+    message_win.clear()
+    message_win.print("Available RSS Feeds: [CTRL+C to quit, CTRL+N to input article, CTRL+O to search google news with OxyLabs, CTRL+R to reset credentials]")
     _display_feed_list(feeds, start_idx, max_lines, max_width)
-    message_win.win.refresh()
 
 def _display_feed_list(feeds, start_idx, max_lines, max_width):  # Helper for feed display
     line_number = 1
@@ -30,7 +29,7 @@ def _display_feed_list(feeds, start_idx, max_lines, max_width):  # Helper for fe
             nickname = nickname[:max_width - 3] + "..."
 
         try:
-            message_win.win.addstr(line_number, 0, f"{key}: {nickname} ({url})")
+            message_win.print(f"{key}: {nickname} ({url})")
             line_number += 1
         except curses.error:
             pass
