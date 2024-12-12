@@ -15,8 +15,11 @@ def print(message):
         message = message[:width - 4] + '...'
     
     # Display the message
-    win.addstr(0, 0, message)
-    win.refresh()
+    try:
+        win.addstr(0, 0, message)
+        win.refresh()
+    except curses.error:
+        return
 
 
 def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None):
@@ -91,9 +94,9 @@ def getch():
     """Get a single character from the user input."""
     return win.getch()
 
-def getstr(prompt):
+def getstr(prompt, callback=None, hotkeys=None):
     """Get a single line of input from the user using our generic input handler."""
-    return handle_input(prompt)
+    return handle_input(prompt, callback=callback, max_input_len=None, hotkeys=hotkeys)
 
 # Helpers
 
