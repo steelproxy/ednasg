@@ -56,8 +56,15 @@ def _initialize_api():
         client.models.list()
         return client
     except Exception as e:
-        utils._fatal_error(f"Error initializing OpenAI client: {str(e)}!")
-
+        def draw_callback():
+            message_win.clear()
+            message_win.print(f"Error initializing OpenAI client: {str(e)}!")
+        
+        choice = bottom_win.handle_input("Would you like to reset your credentials? [y/n]: ", callback=draw_callback)
+        if choice == "y":
+            config.reset_credentials()
+        else:
+            utils._fatal_error(f"Unable to initialize OpenAI client. Please check your credentials and try again.")
 
 def _initialize_config():
     """Initialize feed configuration."""
