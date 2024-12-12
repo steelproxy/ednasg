@@ -47,8 +47,8 @@ def _display_articles(articles, start_idx):
     max_lines = height - 1
     max_width = width - 2
 
-    message_win.win.erase()
-    message_win.win.addstr(0, 0, "Available Articles:")
+    message_win.clear()
+    message_win.print("Available Articles:")
     
     for idx, line_number in _get_visible_articles(articles, start_idx, max_lines):
         article = articles[idx]
@@ -56,11 +56,9 @@ def _display_articles(articles, start_idx):
         date_str = time.strftime("%m,%d,%y", article['date'])
         
         try:
-            message_win.win.addstr(line_number, 0, f"({date_str}) {idx + 1}. {title}")
+            message_win.print(f"({date_str}) {idx + 1}. {title}")
         except curses.error:
             pass
-
-    message_win.win.refresh()
 
 # Input Functions
 def _get_article_title():
