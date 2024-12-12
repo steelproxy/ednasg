@@ -15,7 +15,7 @@ def display_feeds(feeds, start_idx):  # Main function to show RSS feeds
     max_width = width - 2       # Account for side margins
 
     message_win.win.erase()
-    message_win.win.addstr(0, 0, "Available RSS Feeds:")
+    message_win.win.addstr(0, 0, "Available RSS Feeds: [CTRL+C to quit, CTRL+N to input article, CTRL+O to search google news with OxyLabs, CTRL+R to reset credentials]")
     _display_feed_list(feeds, start_idx, max_lines, max_width)
     message_win.win.refresh()
 
@@ -63,12 +63,14 @@ def get_rss_urls(feeds):        # Main input handler for RSS URLs
     def oxylabs_callback():
         return utils.CTRL_O
     
+    
     hotkeys = {                 # Define keyboard shortcuts
-        utils.CTRL_N: (lambda: skip_callback, "break"),
+        utils.CTRL_N: (skip_callback, "break"),
         curses.KEY_DOWN: (lambda: handle_scroll(curses.KEY_DOWN), "scroll down"),
         curses.KEY_UP: (lambda: handle_scroll(curses.KEY_UP), "scroll up"),
         curses.KEY_RESIZE: (resize_callback, "resize"),
-        utils.CTRL_O: (oxylabs_callback, "oxylabs")
+        utils.CTRL_O: (oxylabs_callback, "oxylabs"),
+        utils.CTRL_R: (config.reset_credentials, "reset")
     }
     
     while True:
@@ -80,27 +82,25 @@ def get_rss_urls(feeds):        # Main input handler for RSS URLs
             return None
         
         display_callback()     # Refresh feed list
-        feed_url = _handle_feed_input(selected_option, feeds)
-        if feed_url:
-            return feed_url
+        feed_urls, feeds = _handle_feed_input(selected_option, feeds)
+        if feed_urls:
+            return feed_urls
         
 
 # Feed Processing Functions
 def _handle_feed_input(selected_option, feeds):    # Process user input for feeds
     if selected_option.isdigit():                  # Handle numeric selection
-        return _handle_feed_number(selected_option, feeds)
+        return (_handle_feed_number(selected_option, feeds), feeds)
     
     if ',' in selected_option:                     # Handle multiple URLs
-        _add_multiple_feeds(selected_option.split(','), feeds)
-        return None
+        return (None, _add_multiple_feeds(selected_option.split(','), feeds))
     
     if utils.is_valid_url(selected_option):        # Handle single URL
-        _add_single_feed(selected_option, feeds)
-        return None
-        
+        return (None, _add_single_feed(selected_option, feeds))
+
     bottom_win.print("Invalid URL format. URL must start with ftp:// or http:// or https://")
     time.sleep(2)
-    return None
+    return (None, feeds)
 
 def _handle_feed_number(selected_option, feeds):    # Process numeric feed selection
     if selected_option in feeds:
