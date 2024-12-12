@@ -37,7 +37,7 @@ echo Activating the virtual environment...
 call .venv\Scripts\activate
 
 REM Create requirements.txt if it doesn't exist
-echo requests >> requirements.txt
+echo requests > requirements.txt
 echo jsonschema >> requirements.txt
 echo feedparser > requirements.txt
 echo openai >> requirements.txt
