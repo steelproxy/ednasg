@@ -1,6 +1,6 @@
-jsonschema
-feedparser
-openai
-keyring
+feedparser 
+openai 
+keyring 
+windows-curses 
+packaging 
 requests
-packaging
