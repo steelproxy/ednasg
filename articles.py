@@ -146,15 +146,13 @@ def _select_articles(articles):
             filtered_articles = articles
         return None
     
-    def oxylabs_callback():     # Handles Oxylabs 
-        nonlocal filtered_articles, articles
+    if not filtered_articles:
         resize_callback()
         filtered_articles = oxylabs_search()
         articles = filtered_articles
-        return None
-    
-    if not filtered_articles:
-        oxylabs_callback()
+        if not articles:
+            _handle_no_articles()
+            return None
     
     choices = bottom_win.handle_input(
         "Enter the numbers of articles to include (comma-separated) [ / to search]: ",
@@ -216,7 +214,7 @@ def _parse_article_selection(choices, max_len):
 # Error Handling Functions
 def _handle_no_articles():
     """Handle case when no articles are found."""
-    message_win.print("No articles found in the RSS feed.")
+    message_win.print("No articles found!")
     time.sleep(2)
 
 def _handle_feed_error(error):
