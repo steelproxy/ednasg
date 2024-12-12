@@ -113,10 +113,8 @@ def _render_input(prompt, selected_option, cursor_pos, max_x):
     # Calculate visible portion of text
     visible_text = selected_option[display_start:display_start + available_width]
     
-    try:
-        win.addstr(0, 0, prompt + visible_text, curses.A_NORMAL)
-    except curses.error:
-        pass
+    # Use bottom_win.print() explicitly
+    print(prompt + visible_text)
         
     # Ensure cursor stays within window bounds
     screen_cursor_pos = min(max_x - 1, len(prompt) + cursor_pos - display_start)
@@ -124,7 +122,6 @@ def _render_input(prompt, selected_option, cursor_pos, max_x):
     
     win.move(0, min(screen_cursor_pos, max_x - 1))
     win.refresh()
-    
 def _handle_hotkey(hotkeys, ch):
     """Process hotkey input and execute associated function."""
     func, action = hotkeys[ch]
