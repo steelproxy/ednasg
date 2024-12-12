@@ -31,7 +31,6 @@ def oxylabs_search():
     
     bottom_win.print("Making request...")
     response = _make_oxylabs_request(query, location, username, password)
-    display_scrollable_script(json.dumps(response))
     articles = _format_response_to_articles(response)
     
     return articles
