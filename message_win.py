@@ -8,12 +8,19 @@ global win
 def print(message):    # Display message in window
     """Display a message in the window, truncating lines that exceed window width."""
     max_y, max_x = win.getmaxyx()
-    if len(message) > max_x - 4:
-        message = message[:max_x - 4] + "..."
+    # Account for borders and newline
+    available_width = max_x - 2  # Subtract 2 for safe padding
+    
+    if len(message) > available_width:
+        message = message[:available_width - 3] + "..."  # -3 for the dots
+        
     try:
-        win.addstr(message + '\n')
+        current_y, current_x = win.getyx()  # Get current cursor position
+        win.addstr(current_y, 0, message)   # Write at start of current line
+        win.addstr('\n')                    # Add newline separately
     except curses.error:
         return
+    
     win.refresh()
 
 def clear():          # Clear window contents
