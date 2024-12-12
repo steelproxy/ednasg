@@ -19,6 +19,7 @@ URL_PATTERN = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$'
 CTRL_D = 4                                           # ASCII value for Ctrl+D
 CTRL_N = 14                                          # ASCII value for Ctrl+N
 CTRL_O = 15                                          # ASCII value for Ctrl+O
+CTRL_R = 18                                          # ASCII value for Ctrl+R
 BACKSPACE_KEYS = (curses.KEY_BACKSPACE, 127, '\b',
                   8)  # Various backspace key codes
 ARROW_LEFT = (curses.KEY_LEFT, 452)                    # Left arrow key codes
@@ -50,7 +51,6 @@ def is_valid_url(url):  # Check if URL format is valid
     return re.match(URL_PATTERN, url) is not None
 
 # System operation functions
-
 
 def signal_handler(sig, frame):  # Handle program termination
     """Handle Ctrl+C gracefully."""
