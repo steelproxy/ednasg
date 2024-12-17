@@ -13,6 +13,13 @@ APP_NAME = "ednasg"
 APP_VERSION = "v0.5"
 APP_REPO = "https://api.github.com/repos/steelproxy/ednasg/releases/latest"
 
+# Mouse scroll constants
+WINDOWS_SCROLL_UP = 65536           # Windows-specific scroll up value
+WINDOWS_SCROLL_DOWN = 2097152       # Windows-specific scroll down value
+
+# Determine if we're on Windows
+IS_WINDOWS = platform.system().lower() == 'windows'
+
 # Constants
 # Pattern for validating URLs
 URL_PATTERN = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$'
@@ -20,8 +27,9 @@ CTRL_D = 4                                           # ASCII value for Ctrl+D
 CTRL_N = 14                                          # ASCII value for Ctrl+N
 CTRL_O = 15                                          # ASCII value for Ctrl+O
 CTRL_R = 18                                          # ASCII value for Ctrl+R
-BACKSPACE_KEYS = (curses.KEY_BACKSPACE, 127, '\b',
-                  8)  # Various backspace key codes
+MOUSE_DOWN = curses.BUTTON5_PRESSED if not IS_WINDOWS else WINDOWS_SCROLL_DOWN # Scroll down, scroll values vary between platforms
+MOUSE_UP = curses.BUTTON4_PRESSED if not IS_WINDOWS else WINDOWS_SCROLL_UP     # Scroll up, scroll values vary between platforms
+BACKSPACE_KEYS = (curses.KEY_BACKSPACE, 127, '\b', 8)  # Various backspace key codes
 ARROW_LEFT = (curses.KEY_LEFT, 452)                    # Left arrow key codes
 ARROW_RIGHT = (curses.KEY_RIGHT, 454)                  # Right arrow key codes
 
@@ -60,6 +68,7 @@ def signal_handler(sig, frame):  # Handle program termination
 
 def update_repo():  # Update code from GitHub
     """Run the update script to fetch the latest code from GitHub."""
+    message_win.print("Checking for updates...")
     # determine if application is a script file or frozen exe
     if getattr(sys, 'frozen', False):
         try:
@@ -108,6 +117,10 @@ def _replace_binary(temp_dir, temp_path, current_exe):
 
 
 def _do_binary_update():
+    if not IS_WINDOWS:
+        message_win.print("Binary update is only supported on Windows right now, sorry.")
+        return
+
     # Get current executable path and version
     current_exe = sys.executable
     current_version = version.parse(APP_VERSION)
