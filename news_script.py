@@ -2,6 +2,7 @@ import curses
 import message_win
 import bottom_win
 import screen_manager
+import utils
 from openai import OpenAI
 import time
 
@@ -26,17 +27,27 @@ def get_script(client, articles, custom_prompt):      # Generate news script usi
 
     return response.choices[0].message.content.strip()
 
-def display_scrollable_script(script):                # Display script with scrolling
+def display_scrollable_script(script):
     """Display the script in a scrollable window with user controls."""
     script_scroll_idx = 0
-    max_y, max_x = message_win.win.getmaxyx()        # Get window dimensions
+    max_y, max_x = message_win.win.getmaxyx()
     wrapped_lines = _wrap_text(script, max_x)
     
     while True:
-        bottom_win.print("Use UP/DOWN keys to scroll, 'q' to quit.")
-        _display_script(script, script_scroll_idx)    # Show current view
+        bottom_win.print("Use UP/DOWN keys or mouse wheel to scroll, 'q' to quit.")
+        _display_script(script, script_scroll_idx)
         
-        ch = bottom_win.getch()                       # Get user input
+        ch = bottom_win.getch()
+        if ch == curses.KEY_MOUSE:
+            try:
+                mouse_event = curses.getmouse()
+                if mouse_event[4] & utils.MOUSE_UP:
+                    ch = curses.KEY_UP
+                elif mouse_event[4] & utils.MOUSE_DOWN:
+                    ch = curses.KEY_DOWN
+            except curses.error:
+                continue
+                
         if ch == ord('q'):
             break
             
@@ -120,10 +131,10 @@ def _handle_scroll_input(ch, script_scroll_idx, wrapped_lines):    # Process scr
     """Handle user input for scrolling through the script."""   
     max_y, max_x = message_win.win.getmaxyx()
     
-    if ch == curses.KEY_DOWN:                          # Handle scroll down
+    if ch == curses.KEY_DOWN:     # Handle scroll down
         if script_scroll_idx < len(wrapped_lines) - (max_y - 1):
             return script_scroll_idx + 1
-    elif ch == curses.KEY_UP:                          # Handle scroll up
+    elif ch == curses.KEY_UP:     # Handle scroll up
         if script_scroll_idx > 0:
             return script_scroll_idx - 1
     elif ch == curses.KEY_RESIZE:                      # Handle window resize
