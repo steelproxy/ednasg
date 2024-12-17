@@ -14,7 +14,7 @@ def display_feeds(feeds, start_idx):  # Main function to show RSS feeds
     max_lines = height - 1      # Reserve space for status bar
     max_width = width - 2       # Account for side margins
 
-    message_win.clear()
+    message_win.erase()
     message_win.print("Available RSS Feeds: [CTRL+C to quit, CTRL+N to input article, CTRL+O to search google news with OxyLabs, CTRL+R to reset credentials]")
     _display_feed_list(feeds, start_idx, max_lines, max_width)
 
