@@ -36,6 +36,8 @@ def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None):
     # Initialize input and cursor position
     input_str = ""
     cursor_pos = 0
+    original_prompt = prompt
+
     while True:
         
         if callback: # Call callback if provided
@@ -45,6 +47,8 @@ def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None):
             
         # Get window dimensions
         max_y, max_x = win.getmaxyx()
+        if len(prompt) > max_x:
+            prompt = "[]: "
         
         # Render input using the same method as get_rss_urls
         _render_input(prompt, input_str, cursor_pos, max_x)
@@ -55,8 +59,39 @@ def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None):
             curses.endwin()
             sys.exit(0)
 
+        if ch == curses.KEY_MOUSE:
+            try: # Handle mouse scroll
+                mouse_event = curses.getmouse()
+                button_state = mouse_event[4]
+                
+                # Debug logging
+                #with open('mouse_debug.log', 'a') as f:
+                #    f.write(f"Mouse event details:\n")
+                #    f.write(f"  id: {mouse_event[0]}\n")
+                #    f.write(f"  x: {mouse_event[1]}\n")
+                #    f.write(f"  y: {mouse_event[2]}\n")
+                #    f.write(f"  z: {mouse_event[3]}\n")
+                #    f.write(f"  bstate: {bin(button_state)} ({button_state})\n")
+                #    f.write("---\n")
+                
+                # Standard curses scroll handling for other platforms
+                if (button_state & utils.MOUSE_UP or 
+                    button_state & (1 << 3)):  # Alternative scroll up
+                    ch = curses.KEY_UP
+                elif (button_state & utils.MOUSE_DOWN or 
+                    button_state & (1 << 4)):  # Alternative scroll down
+                    ch = curses.KEY_DOWN
+            except curses.error:
+                return cursor_pos
+
         # Check for hotkeys first
         if hotkeys and ch in hotkeys:
+            if ch == curses.KEY_RESIZE:
+                max_y, max_x = screen_manager.handle_resize()
+                if len(original_prompt) > max_x:
+                    prompt = "[]: "
+                else:
+                    prompt = original_prompt
             result = _handle_hotkey(hotkeys, ch)
             if result is not None:
                 if result == "break":
@@ -77,6 +112,10 @@ def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None):
                 cursor_pos += 1
             case curses.KEY_RESIZE:
                 max_y, max_x = screen_manager.handle_resize()
+                if len(original_prompt) > max_x:
+                    prompt = "[]: "
+                else:
+                    prompt = original_prompt
                 continue
             case _ if 32 <= ch <= 126:
                 if not max_input_len or len(input_str) < max_input_len:
@@ -130,7 +169,5 @@ def _handle_hotkey(hotkeys, ch):
     func, action = hotkeys[ch]
     if action == "break":
         return "break"
-    if ch == curses.KEY_RESIZE:  # Handle extra resize callback
-        max_y, max_x = screen_manager.handle_resize()
     result = func()
     return result
