@@ -75,6 +75,21 @@ def get_multiline_input(prompt, end_key=4):    # Get multi-line user input
 def handle_input(ch, cursor_x, cursor_y, scroll_offset, input_str, max_x, max_y):    # Process input
     """Handle different types of input and return updated cursor positions."""
     match ch:
+        case curses.KEY_MOUSE:                         # Handle mouse events
+            try:
+                mouse_event = curses.getmouse()
+                button_state = mouse_event[4]
+                
+                # Standard curses scroll handling for other platforms
+                if button_state & utils.MOUSE_UP:
+                    ch = curses.KEY_UP
+                elif button_state & utils.MOUSE_DOWN:
+                    ch = curses.KEY_DOWN
+            except curses.error:
+                return cursor_x, cursor_y, scroll_offset
+            
+            # Fall through to handle the updated ch value in other cases
+            
         case _ if ch in utils.BACKSPACE_KEYS:             # Handle backspace
             return _handle_backspace(cursor_x, cursor_y, scroll_offset, input_str)
             
@@ -87,7 +102,7 @@ def handle_input(ch, cursor_x, cursor_y, scroll_offset, input_str, max_x, max_y)
         case _ if ch in utils.ARROW_RIGHT:              # Handle right arrow
             return _handle_right_arrow(cursor_x, cursor_y, scroll_offset, input_str, max_y)
             
-        case curses.KEY_UP if cursor_y > 0:            # Handle up arrow
+        case curses.KEY_UP if cursor_y > 0:    # Handle up arrow
             return _handle_up_arrow(cursor_x, cursor_y, scroll_offset, input_str)
             
         case curses.KEY_DOWN if cursor_y < len(input_str) - 1:    # Handle down arrow
