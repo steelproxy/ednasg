@@ -13,9 +13,10 @@ def setup_curses():
 
 def _setup_cursor_and_input():
     """Configure cursor and input settings."""
-    curses.curs_set(2)      # Make cursor visible (1 = visible, 0 = invisible)
+    curses.curs_set(1)      # Make cursor visible (1 = visible, 0 = invisible)
     curses.noecho()         # Disable character echoing to screen
-    stdscr.keypad(1)        # Enable special key handling (like arrow keys)
+    stdscr.keypad(1)        # Enable special key handling
+    curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
 
 def _setup_colors():
     """Initialize color settings."""
