@@ -16,7 +16,7 @@ def get_manual_article():
 
 def get_rss_articles(rss_url):
     """Fetch and parse articles from RSS feed."""
-    message_win.win.erase()
+    message_win.erase()
     if rss_url != utils.CTRL_O:
         message_win.print("Fetching RSS feed...")
         try:
@@ -47,8 +47,8 @@ def _display_articles(articles, start_idx):
     max_lines = height - 1
     max_width = width - 2
 
-    message_win.clear()
-    message_win.print("Available Articles:")
+    message_win.erase()
+    message_win.print("Available Articles [Input as comma-separated numbers] ['/' to search]:")
     
     for idx, line_number in _get_visible_articles(articles, start_idx, max_lines):
         article = articles[idx]
@@ -130,7 +130,6 @@ def _select_articles(articles):
             hotkeys={
                 curses.KEY_DOWN: (scroll_down, "Scroll down"),
                 curses.KEY_UP: (scroll_up, "Scroll up"),
-                curses.KEY_RESIZE: (resize_callback, "Resize"),
             }
         )
         article_scroll_idx = 0
@@ -152,7 +151,7 @@ def _select_articles(articles):
             return None
     
     choices = bottom_win.handle_input(
-        "Enter the numbers of articles to include (comma-separated) [ / to search]: ",
+        "Enter your article selection: ",
         lambda: _display_articles(filtered_articles, article_scroll_idx),  # Changed: Use filtered_articles
         max_input_len=100,
         hotkeys={
