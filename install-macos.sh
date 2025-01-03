@@ -15,14 +15,14 @@ echo "Installing Python 3..."
 brew install python
 
 # Check if the installation was successful
-if ! command -v python3 &> /dev/null; then
+if ! command -v python3.12 &> /dev/null; then
     echo "Python installation failed!"
     exit 1
 fi
 
 # Create a virtual environment
 echo "Creating a virtual environment..."
-python3 -m venv .venv
+python3.12 -m venv .venv
 
 # Activate the virtual environment
 echo "Activating the virtual environment..."
