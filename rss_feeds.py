@@ -15,7 +15,7 @@ def display_feeds(feeds, start_idx):  # Main function to show RSS feeds
     max_width = width - 2       # Account for side margins
 
     message_win.erase()
-    message_win.print("Available RSS Feeds: [CTRL+C to quit, CTRL+N to input article, CTRL+O to search google news with OxyLabs, CTRL+R to reset credentials]")
+    message_win.print("Available RSS Feeds: [CTRL+C to quit, CTRL+N to input article, CTRL+O (CTRL+W on macOS) to search google news with OxyLabs, CTRL+R to reset credentials]")
     _display_feed_list(feeds, start_idx, max_lines, max_width)
 
 def _display_feed_list(feeds, start_idx, max_lines, max_width):  # Helper for feed display
