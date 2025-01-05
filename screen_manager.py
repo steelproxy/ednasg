@@ -41,16 +41,16 @@ def _setup_message_window(term_height, term_width):
     """Configure the main message window."""
     message_win.win = curses.newwin(term_height - 1, term_width, 0, 0)  # height, width, y, x
     message_win.win.scrollok(False)  # Disable automatic scrolling
-    message_win.win.leaveok(False)       # Update cursor position after write
-    message_win.win.idlok(False)        # Disable cursor blinking
-    message_win.win.keypad(True)        # Enable special key handling
+    message_win.win.leaveok(False)   # Update cursor position after write
+    message_win.win.idlok(False)     # Disable cursor blinking
+    message_win.win.keypad(True)     # Enable special key handling
 
 def _setup_bottom_window(term_height, term_width):
     """Configure the bottom input window."""
     bottom_win.win = curses.newwin(1, term_width, term_height - 1, 0)  # 1-line window at bottom
     bottom_win.win.scrollok(False)   # Disable automatic scrolling
-    bottom_win.win.leaveok(False)        # Update cursor position after write
-    bottom_win.win.idlok(False)       # Disable cursor blinking
+    bottom_win.win.leaveok(False)    # Update cursor position after write
+    bottom_win.win.idlok(False)      # Disable cursor blinking
     bottom_win.win.keypad(True)      # Enable special key handling
 
 def _apply_window_colors():

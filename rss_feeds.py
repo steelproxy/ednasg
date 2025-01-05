@@ -6,6 +6,7 @@ import config
 from screen_manager import setup_windows
 import utils
 from oxylabs import oxylabs_search
+import api_keyring
 
 # Display Functions
 def display_feeds(feeds, start_idx):  # Main function to show RSS feeds
@@ -69,7 +70,7 @@ def get_rss_urls(feeds):        # Main input handler for RSS URLs
         curses.KEY_UP: (lambda: handle_scroll(curses.KEY_UP), "scroll up"),
         curses.KEY_RESIZE: (resize_callback, "resize"),
         utils.CTRL_O: (oxylabs_callback, "oxylabs"),
-        utils.CTRL_R: (config.reset_credentials, "reset")
+        utils.CTRL_R: (api_keyring.reset_credentials, "reset")
     }
     
     while True:

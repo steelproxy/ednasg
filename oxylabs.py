@@ -1,33 +1,35 @@
 import requests
-import config
 import bottom_win
 import message_win
 from news_script import display_scrollable_script
 import time
-import json
+import api_keyring
+from time import sleep
 
 def oxylabs_search():
     """Search for articles using Oxylabs."""
-    message_win.clear()
-    message_win.print("Google News SERP Scraping mode activated.")
-    message_win.print("Hint: geolocation can be formatted in several ways.")
-    message_win.print(" eg. \"geo_location\": \"California,United States\"")
-    message_win.print(" eg. \"geo_location\": \"United Kingdom\"")
-    message_win.print(" eg. \"geo_location\": \"lat: 47.6205, lng: -122.3493, rad: 25000\"")
-    message_win.print("They can also be formatted as their respective Google Canonical Location Name or Criteria ID")
-    message_win.print(" eg. \"geo_location\": \"1023191\"")
-    message_win.print("A list of these values is available at: https://developers.google.com/adwords/api/docs/appendix/geotargeting")
+    message_win.clear_buffer()
+    message_win.baprint("Google News SERP Scraping mode activated.")
+    message_win.baprint("Hint: geolocation can be formatted in several ways.")
+    message_win.baprint(" eg. \"geo_location\": \"California,United States\"")
+    message_win.baprint(" eg. \"geo_location\": \"United Kingdom\"")
+    message_win.baprint(" eg. \"geo_location\": \"lat: 47.6205, lng: -122.3493, rad: 25000\"")
+    message_win.baprint("They can also be formatted as their respective Google Canonical Location Name or Criteria ID")
+    message_win.baprint(" eg. \"geo_location\": \"1023191\"")
+    message_win.baprint("A list of these values is available at: https://developers.google.com/adwords/api/docs/appendix/geotargeting")
     
-    username, password = config.get_oxylabs_credentials()
+    username, password = api_keyring.get_oxylabs_credentials()
     if not username or not password:
         bottom_win.print("No Oxylabs credentials found. Skipping search...")
+        sleep(2)
         return None
     
-    query = bottom_win.getstr("Enter search query: ")
-    message_win.print(f"Query: {query}")
     
-    location = bottom_win.getstr("Enter location: ")
-    message_win.print(f"Location: {location}")
+    query = bottom_win.getstr("Enter search query: ", callback=message_win.print_buffer)
+    message_win.baprint(f"Query: {query}")
+    
+    location = bottom_win.getstr("Enter location: ", callback=message_win.print_buffer)
+    message_win.baprint(f"Location: {location}")
     
     bottom_win.print("Making request...")
     response = _make_oxylabs_request(query, location, username, password)
@@ -83,7 +85,8 @@ def _make_oxylabs_request(query, location, username, password):
         )
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        bottom_win.print(f"Error making Oxylabs request: {str(e)}")
+        bottom_win.baprint(f"Error making Oxylabs request: {str(e)}")
+        sleep(2)
         return None
     
     return response.json()

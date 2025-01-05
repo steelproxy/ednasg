@@ -9,6 +9,7 @@ import platform
 import bottom_win
 from packaging import version
 
+# Application Constants
 APP_NAME = "ednasg"
 APP_VERSION = "v0.5"
 APP_REPO = "https://api.github.com/repos/steelproxy/ednasg/releases/latest"
@@ -17,12 +18,11 @@ APP_REPO = "https://api.github.com/repos/steelproxy/ednasg/releases/latest"
 WINDOWS_SCROLL_UP = 65536           # Windows-specific scroll up value
 WINDOWS_SCROLL_DOWN = 2097152       # Windows-specific scroll down value
 
-# Determine if we're on Windows
+# Platform detection
 IS_WINDOWS = platform.system().lower() == 'windows'
 
-# Constants
-# Pattern for validating URLs
-URL_PATTERN = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$'
+# Input Constants
+URL_PATTERN = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$'  # Pattern for validating URLs
 CTRL_D = 4                                           # ASCII value for Ctrl+D
 CTRL_N = 14                                          # ASCII value for Ctrl+N
 CTRL_O = 15                                          # ASCII value for Ctrl+O
@@ -33,11 +33,16 @@ BACKSPACE_KEYS = (curses.KEY_BACKSPACE, 127, '\b', 8)  # Various backspace key c
 ARROW_LEFT = (curses.KEY_LEFT, 452)                    # Left arrow key codes
 ARROW_RIGHT = (curses.KEY_RIGHT, 454)                  # Right arrow key codes
 
-# Input handling functions
-
-
-def wrap_text(text, width):  # Wraps text to fit window width
-    """Wrap text to fit within the given width."""
+def wrap_text(text, width):
+    """Wrap text to fit within the given width.
+    
+    Args:
+        text: The text to wrap
+        width: Maximum width for each line
+        
+    Returns:
+        list: A list of wrapped text lines
+    """
     wrapped_lines = []
     for line in text.split('\n'):  # Process each line separately
         while len(line) > width:   # Split lines longer than width
@@ -46,13 +51,18 @@ def wrap_text(text, width):  # Wraps text to fit window width
         wrapped_lines.append(line)
     return wrapped_lines
 
-
-def sanitize_input_char(ch):  # Convert special chars to strings
-    """Convert special characters to their string representation."""
-    if 32 <= ch <= 126:      # Check if char is printable ASCII
+def sanitize_input_char(ch):
+    """Convert special characters to their string representation.
+    
+    Args:
+        ch: The character code to sanitize
+        
+    Returns:
+        str: The sanitized character or empty string if invalid
+    """
+    if 32 <= ch <= 126:  # Only allow printable ASCII characters
         return chr(ch)
     return ''
-
 
 def is_valid_url(url):  # Check if URL format is valid
     """Basic URL validation using regex."""
@@ -68,28 +78,26 @@ def signal_handler(sig, frame):  # Handle program termination
 
 def update_repo():  # Update code from GitHub
     """Run the update script to fetch the latest code from GitHub."""
-    message_win.print("Checking for updates...")
+    message_win.baprint("Checking for updates...")
     # determine if application is a script file or frozen exe
     if getattr(sys, 'frozen', False):
         try:
             _do_binary_update()
         except Exception as e:
-            message_win.print(
-                f"Unexpected exception occurred while updating: {e}")
-            message_win.print("Proceeding with current version...")
+            message_win.baprint(f"Unexpected exception occurred while updating: {e}")
+            message_win.baprint("Proceeding with current version...")
     else:
         try:
             subprocess.run(["git", "--version"],
                            check=True, capture_output=True)  # Verify git installation
             # Pull latest changes
             subprocess.run(["git", "pull"], check=True, capture_output=True)
-            message_win.print("Repository updated successfully.")
+            message_win.baprint("Repository updated successfully.")
         except (subprocess.CalledProcessError, FileNotFoundError):
-            message_win.print("Git not found in PATH. Skipping update...")
-            message_win.print("Proceeding with the current version...")
+            message_win.baprint("Git not found in PATH. Skipping update...")
+            message_win.baprint("Proceeding with the current version...")
         except Exception as e:
-            message_win.print(
-                f"Unexpected exception occured while updating: {e}")
+            message_win.baprint(f"Unexpected exception occured while updating: {e}")
 
 
 def _replace_binary(temp_dir, temp_path, current_exe):
@@ -118,7 +126,7 @@ def _replace_binary(temp_dir, temp_path, current_exe):
 
 def _do_binary_update():
     if not IS_WINDOWS:
-        message_win.print("Binary update is only supported on Windows right now, sorry.")
+        message_win.baprint("Binary update is only supported on Windows right now, sorry.")
         return
 
     # Get current executable path and version
@@ -137,7 +145,7 @@ def _do_binary_update():
 
     # Check if update is needed
     if latest_version <= current_version:
-        message_win.print(f"Already running latest version {current_version}")
+        message_win.baprint(f"Already running latest version {current_version}")
         return
 
     # Find matching asset for current platform
@@ -148,18 +156,18 @@ def _do_binary_update():
             break
 
     if not asset:
-        message_win.print(f"No release was found for platform: {system}! Skipping update...")
+        message_win.baprint(f"No release was found for platform: {system}! Skipping update...")
         return
 
     # Download new version
-    message_win.print(f"Downloading update {latest_version}...")
+    message_win.baprint(f"Downloading update {latest_version}...")
     try:
         response = requests.get(asset['browser_download_url'], stream=True)
         if response.status_code != 200:
-            message_win.print(f"Failed to download update! Response code: {response.status_code}. Skipping update...")
+            message_win.baprint(f"Failed to download update! Response code: {response.status_code}. Skipping update...")
             return
     except requests.exceptions.RequestException as e:
-        message_win.print(f"Failed to download update! Exception occurred: {e}. Skipping update...")
+        message_win.baprint(f"Failed to download update! Exception occurred: {e}. Skipping update...")
         return
 
     try:
@@ -177,28 +185,29 @@ def _do_binary_update():
         else:
             os.replace(temp_path, current_exe)
     except Exception as e:
-        message_win.print(f"Failed to download update! Exception occurred: {e}. Skipping update...")
+        message_win.baprint(f"Failed to download update! Exception occurred: {e}. Skipping update...")
         return
         
-    message_win.print("Update downloaded! Restarting application...")
+    message_win.baprint("Update downloaded! Restarting application...")
     sys.exit(0)
 
-
-def _wait_for_exit():
+def wait_for_exit():
     """Wait for user input before exiting."""
     bottom_win.print("Press any button to exit...")
     bottom_win.getch()
 
-
 def _handle_exit():
-    """Handle application exit."""
+    """Clean up curses and exit the application."""
     curses.endwin()
     sys.exit(0)
 
-
 def _fatal_error(message):
-    """Display error message and exit"""
+    """Display error message and exit application.
+    
+    Args:
+        message: The error message to display
+    """
     message_win.clear()
     message_win.print(message)
-    _wait_for_exit()
+    wait_for_exit()
     _handle_exit()
