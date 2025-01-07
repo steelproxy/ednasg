@@ -1,4 +1,6 @@
-# ednasg
+### THIS IS AN ARCHIVED VERSION OF THE PROGRAM THAT SUPPORTS OXYLABS INTEGRATION AND WILL NOT BE DEVELOPED FURTHER
+
+# ednasg-oxylabs
 
 A Python application that fetches articles from RSS feeds and generates a news anchor script using OpenAI's ChatGPT. The program provides a user-friendly interface for selecting feeds and articles, customizing prompts, and displaying the generated script.
 
