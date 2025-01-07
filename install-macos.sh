@@ -44,7 +44,14 @@ echo "Installing required packages..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
+cat <<EOL > start.sh
+source .venv/bin/activate
+python ./ednasg.py
+EOL
+
+chmod +x ./start.sh
+
 # Print completion message
-echo "Installation complete! Your virtual environment is active."
+echo "Installation complete!"
 echo "You can run your program now!"
-echo "Run these commands: python ./ednasg.py"
+echo "Run these commands: ./start.sh"
