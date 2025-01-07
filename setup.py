@@ -12,6 +12,8 @@ setup(
         "openai",
         "keyring",
         "jsonschema",
+        "windows-curses",
+        "pygooglenews",
     ],
     entry_points={
         'console_scripts': [

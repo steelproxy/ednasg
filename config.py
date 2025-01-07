@@ -12,8 +12,6 @@ from keyring.backends.Windows import WinVaultKeyring
 CONFIG_FILE = 'rss_feeds.json'
 SERVICE_ID = "ednasg"
 KEY_ID = "api_key"
-USERNAME_ID = "oxylabs_username"
-PASSWORD_ID = "oxylabs_password"
 
 # Feed Configuration Schema
 FEED_SCHEMA = {
