@@ -36,6 +36,7 @@ openai
 keyring
 requests
 packaging
+pygooglenews
 EOL
 
 # Install required packages

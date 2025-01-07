@@ -4,3 +4,4 @@ keyring
 windows-curses 
 packaging 
 requests
+pygooglenews

@@ -44,6 +44,7 @@ echo openai >> requirements.txt
 echo keyring >> requirements.txt
 echo windows-curses >> requirements.txt
 echo packaging >> requirements.txt
+echo pygooglenews >> requirements.txt
 
 REM Create start script
 echo .venv\Scripts\activate > start.bat
