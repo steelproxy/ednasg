@@ -25,10 +25,16 @@ IS_WINDOWS = platform.system().lower() == 'windows'
 URL_PATTERN = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$'  # Pattern for validating URLs
 CTRL_D = 4                                           # ASCII value for Ctrl+D
 CTRL_N = 14                                          # ASCII value for Ctrl+N
-CTRL_O = 15                                          # ASCII value for Ctrl+O
+# Set CTRL_O to the value for CTRL+W (23) on macOS
+if platform.system().lower() == 'darwin':
+    CTRL_O = 23  # ASCII value for Ctrl+W
+else:
+    CTRL_O = 15  # Default ASCII value for Ctrl+O
 CTRL_R = 18                                          # ASCII value for Ctrl+R
-MOUSE_DOWN = curses.BUTTON5_PRESSED if not IS_WINDOWS else WINDOWS_SCROLL_DOWN # Scroll down, scroll values vary between platforms
-MOUSE_UP = curses.BUTTON4_PRESSED if not IS_WINDOWS else WINDOWS_SCROLL_UP     # Scroll up, scroll values vary between platforms
+if hasattr(curses, 'BUTTON5_PRESSED'):
+    MOUSE_DOWN = curses.BUTTON5_PRESSED if not IS_WINDOWS else WINDOWS_SCROLL_DOWN # Scroll down, scroll values vary between platforms
+if hasattr(curses, 'BUTTON4_PRESSED'):
+    MOUSE_UP = curses.BUTTON4_PRESSED if not IS_WINDOWS else WINDOWS_SCROLL_UP     # Scroll up, scroll values vary between platforms
 BACKSPACE_KEYS = (curses.KEY_BACKSPACE, 127, '\b', 8)  # Various backspace key codes
 ARROW_LEFT = (curses.KEY_LEFT, 452)                    # Left arrow key codes
 ARROW_RIGHT = (curses.KEY_RIGHT, 454)                  # Right arrow key codes
