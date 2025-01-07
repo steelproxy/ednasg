@@ -88,6 +88,16 @@ def pgn_search():
         case "4":
             return search_querytime()
 
+#def link(uri, label=None):
+#    if label is None: 
+#        label = uri
+#    parameters = ''
+#
+#    # OSC 8 ; params ; URI ST <name> OSC 8 ;; ST 
+#    escape_mask = '\033]8;{};{}\033\\{}\033]8;;\033\\'
+#
+#    return escape_mask.format(parameters, uri, label)
+
 def _format_entires_to_articles(results):
     """Format the pygooglenews response to a list of articles."""       
     # Transform each article to match expected format (title, summary, date)
@@ -97,7 +107,8 @@ def _format_entires_to_articles(results):
         formatted_articles.append({
             'title': article['title'],
             'summary': re.sub('<[^<]+?>', '', article['summary']),
-            'date': strptime(article['published'], "%a, %d %b %Y %H:%M:%S %Z")
+            'date': strptime(article['published'], "%a, %d %b %Y %H:%M:%S %Z"),
+            'url': article['link']
         })
         
     return formatted_articles

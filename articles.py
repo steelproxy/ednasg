@@ -12,12 +12,12 @@ def get_manual_article():
     title = _get_article_title()
     message_win.print(f"Title: {title}")
     summary = _get_article_summary()
-    return [{'title': title, 'summary': summary, 'date': time.localtime()}]
+    return [{'title': title, 'summary': summary, 'date': time.localtime(), 'url': None}]
 
 def get_rss_articles(rss_url):
     """Fetch and parse articles from RSS feed."""
     message_win.erase()
-    if rss_url != utils.CTRL_O:
+    if rss_url != utils.PGN_HOTKEY:
         message_win.print("Fetching RSS feed...")
         try:
             feed = _fetch_and_validate_feed(rss_url)
@@ -41,18 +41,18 @@ def get_rss_articles(rss_url):
             
 
 # Display Functions
-def _display_articles(articles, start_idx):
+def _display_articles(articles, start_idx, url_visible=False):
     """Display a paginated list of articles in the window."""
     height, width = message_win.win.getmaxyx()
     max_lines = height - 1
     max_width = width - 2
 
     message_win.erase()
-    message_win.print("Available Articles [Input as comma-separated numbers] ['/' to search]:")
+    message_win.print("Available Articles [Input as comma-separated numbers] ['/' to search, '?' to view urls]:")
     
     for idx, line_number in _get_visible_articles(articles, start_idx, max_lines):
         article = articles[idx]
-        title = _format_article_title(article['title'].replace('\n', ' '), max_width)
+        title = _format_article_title(article['title'].replace('\n', ' ') if not url_visible else article['url'].replace('\n', ' '), max_width)
         date_str = time.strftime("%m,%d,%Y %H:%M:%S", article['date'])
         
         try:
@@ -93,7 +93,7 @@ def _fetch_and_validate_feed(rss_url):
 def _extract_articles(feed):
     """Extract article data from feed entries."""
     return [
-        {'date': entry.updated_parsed, 'title': entry.title, 'summary': entry.summary}
+        {'date': entry.updated_parsed, 'title': entry.title, 'summary': entry.summary, 'url': entry.link}
         for entry in feed.entries
     ]
 
@@ -103,7 +103,8 @@ def _select_articles(articles):
     article_scroll_idx = 0
     filtered_articles = articles  # New: Keep track of filtered articles
     search_term = ""  # New: Keep track of current search term
-    
+    view_url = False
+
     def scroll_down():
         nonlocal article_scroll_idx
         if article_scroll_idx < len(filtered_articles) - 1:  # Changed: Use filtered_articles
@@ -142,6 +143,11 @@ def _select_articles(articles):
             filtered_articles = articles
         return None
     
+    def view_url_callback():
+        nonlocal view_url
+        view_url = True
+        return None
+    
     if not filtered_articles:
         resize_callback()
         filtered_articles = pgn_search()
@@ -152,13 +158,14 @@ def _select_articles(articles):
     
     choices = bottom_win.handle_input(
         "Enter your article selection: ",
-        lambda: _display_articles(filtered_articles, article_scroll_idx),  # Changed: Use filtered_articles
+        lambda: _display_articles(filtered_articles, article_scroll_idx, view_url),  # Changed: Use filtered_articles
         max_input_len=100,
         hotkeys={
             curses.KEY_DOWN: (scroll_down, "Scroll down"),
             curses.KEY_UP: (scroll_up, "Scroll up"),
             curses.KEY_RESIZE: (resize_callback, "Resize"),
             ord('/'): (search_callback, "Search"),  # New: Add search hotkey
+            ord('?'): (view_url_callback, "url callback")
         }
     )
     
