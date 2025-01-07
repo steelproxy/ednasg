@@ -22,6 +22,7 @@ A Python application that fetches articles from RSS feeds and generates a news a
     - windows_curses (if using on Windows)
     - keyring
     - packaging
+    - pygooglenews
 
 ## Installation
 
