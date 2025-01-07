@@ -5,19 +5,54 @@ import bottom_win
 import screen_manager
 global win
 
-def print(message):    # Display message in window
-    """Display a message in the window, truncating lines that exceed window width."""
+message_buffer = []
+
+def print(message, wrap=False):    # Display message in window
+    """Display a message in the window, with option to wrap or truncate lines that exceed window width.
+    
+    Args:
+        message: The message to display
+        wrap: If True, wrap long lines. If False, truncate with ellipsis.
+    """
     max_y, max_x = win.getmaxyx()
-    # Account for borders and newline
     available_width = max_x - 2  # Subtract 2 for safe padding
     
-    if len(message) > available_width:
-        message = message[:available_width - 3] + "..."  # -3 for the dots
-        
     try:
         current_y, current_x = win.getyx()  # Get current cursor position
-        win.addstr(current_y, 0, message)   # Write at start of current line
-        win.addstr('\n')                    # Add newline separately
+        
+        if wrap:
+            # Split message into wrapped lines
+            lines = []
+            remaining = message
+            while remaining:
+                if len(remaining) <= available_width:
+                    lines.append(remaining)
+                    break
+                # Find last space before width limit
+                split_point = remaining[:available_width].rfind(' ')
+                if split_point == -1:  # No space found, force split
+                    split_point = available_width
+                lines.append(remaining[:split_point])
+                remaining = remaining[split_point:].lstrip()
+                
+            # Print wrapped lines
+            for line in lines:
+                if current_y >= max_y - 1:  # Check window bounds
+                    return
+                # Print as much of line as will fit
+                chars_that_fit = min(len(line), available_width)
+                win.addstr(current_y, 0, line[:chars_that_fit])
+                win.addstr('\n')
+                current_y += 1
+        else:
+            # Truncate with ellipsis
+            if len(message) > available_width:
+                message = message[:available_width - 3] + "..."
+            if current_y >= max_y - 1:  # Check window bounds
+                return
+            win.addstr(current_y, 0, message)
+            win.addstr('\n')
+            
     except curses.error:
         return
     
@@ -28,9 +63,32 @@ def clear():          # Clear window contents
     win.erase()
     win.refresh()
 
+def print_buffer():
+    """Print the buffer."""
+    erase()
+    max_y, _ = win.getmaxyx()
+    # If buffer exceeds window height, only show newest messages that fit
+    start_idx = max(0, len(message_buffer) - max_y + 1)  # +1 for safe padding
+    for message in message_buffer[start_idx:]:
+        print(message, wrap=True)
+
+def baprint(message):
+    """Print a message and add it to the buffer."""
+    message_buffer.append(message)
+    print_buffer()
+
+def clear_buffer():
+    """Clear the buffer."""
+    message_buffer.clear()
+
 def erase():
     """Erase the window."""
     win.erase()
+
+def error(message):
+    win.erase()
+    print(message, wrap=True)
+    bottom_win.pause()
     
 def get_multiline_input(prompt, end_key=4):    # Get multi-line user input
     """Get multiline input from the user with scroll and cursor support."""

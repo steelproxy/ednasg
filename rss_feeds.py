@@ -5,7 +5,7 @@ import message_win
 import config
 from screen_manager import setup_windows
 import utils
-from oxylabs import oxylabs_search
+import api_keyring
 
 # Display Functions
 def display_feeds(feeds, start_idx):  # Main function to show RSS feeds
@@ -15,7 +15,7 @@ def display_feeds(feeds, start_idx):  # Main function to show RSS feeds
     max_width = width - 2       # Account for side margins
 
     message_win.erase()
-    message_win.print("Available RSS Feeds: [CTRL+C to quit, CTRL+N to input article, CTRL+O (CTRL+W on macOS) to search google news with OxyLabs, CTRL+R to reset credentials]")
+    message_win.print("Available RSS Feeds: [CTRL+C to quit, CTRL+N to input article, CTRL+O (CTRL+W on macOS) to search google news, CTRL+R to reset credentials]")
     _display_feed_list(feeds, start_idx, max_lines, max_width)
 
 def _display_feed_list(feeds, start_idx, max_lines, max_width):  # Helper for feed display
@@ -69,7 +69,7 @@ def get_rss_urls(feeds):        # Main input handler for RSS URLs
         curses.KEY_UP: (lambda: handle_scroll(curses.KEY_UP), "scroll up"),
         curses.KEY_RESIZE: (resize_callback, "resize"),
         utils.CTRL_O: (oxylabs_callback, "oxylabs"),
-        utils.CTRL_R: (config.reset_credentials, "reset")
+        utils.CTRL_R: (api_keyring.reset_credentials, "reset")
     }
     
     while True:

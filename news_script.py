@@ -66,15 +66,15 @@ def write_script_to_file(filename, script):           # Handle file writing
             f.write(script)
         return True
     except IOError as e:
-        bottom_win.print(f"Error saving file: {str(e)}")
+        message_win.error(f"Error saving file: {str(e)}")
     except Exception as e:
-        bottom_win.print(f"Unexpected error saving file: {str(e)}")
+        message_win.error(f"Unexpected error saving file: {str(e)}")
     return False
 
 def save_script_to_file(script):                      # Main save function
     """Save the script to a file with user-specified filename."""
     if not script:
-        bottom_win.print("Error: No script content to save")
+        message_win.error("Error: No script content to save")
         return False
 
     filename = get_save_filename()

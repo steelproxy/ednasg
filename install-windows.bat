@@ -37,13 +37,16 @@ echo Activating the virtual environment...
 call .venv\Scripts\activate
 
 REM Create requirements.txt if it doesn't exist
-echo requests > requirements.txt
-echo jsonschema >> requirements.txt
-echo feedparser > requirements.txt
-echo openai >> requirements.txt
-echo keyring >> requirements.txt
-echo windows-curses >> requirements.txt
-echo packaging >> requirements.txt
+(
+    echo requests
+    echo jsonschema
+    echo feedparser
+    echo openai
+    echo keyring
+    echo windows-curses
+    echo packaging
+    echo pygooglenews
+) > requirements.txt
 
 REM Create start script
 echo .venv\Scripts\activate > start.bat
@@ -57,7 +60,7 @@ pip install -r requirements.txt
 REM Print completion message
 echo Installation complete! Your virtual environment is ready.
 echo You can run your program now by running with .\start.bat or with these commands:
-echo python .\ednasg.py
+echo .\start.bat
 
 pause
 endlocal
