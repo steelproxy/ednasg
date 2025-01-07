@@ -93,6 +93,10 @@ def update_repo():  # Update code from GitHub
             # Pull latest changes
             subprocess.run(["git", "pull"], check=True, capture_output=True)
             message_win.baprint("Repository updated successfully.")
+
+            # Update or install dependencies
+            subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True)
+            message_win.baprint("Dependencies updated successfully.")
         except (subprocess.CalledProcessError, FileNotFoundError):
             message_win.baprint("Git not found in PATH. Skipping update...")
             message_win.baprint("Proceeding with the current version...")
