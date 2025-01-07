@@ -53,7 +53,7 @@ def _display_articles(articles, start_idx):
     for idx, line_number in _get_visible_articles(articles, start_idx, max_lines):
         article = articles[idx]
         title = _format_article_title(article['title'].replace('\n', ' '), max_width)
-        date_str = time.strftime("%m,%d,%y", time.strptime(article['date'], "%m, %d, %y"))
+        date_str = time.strftime("%m,%d,%Y %H:%M:%S", article['date'])
         
         try:
             message_win.print(f"({date_str}) {idx + 1}. {title}")
