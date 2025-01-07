@@ -89,14 +89,17 @@ def update_repo():  # Update code from GitHub
     else:
         try:
             subprocess.run(["git", "--version"],
-                           check=True, capture_output=True)  # Verify git installation
+                           check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # Verify git installation
             # Pull latest changes
-            subprocess.run(["git", "pull"], check=True, capture_output=True)
-            message_win.baprint("Repository updated successfully.")
-
-            # Update or install dependencies
-            subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True)
-            message_win.baprint("Dependencies updated successfully.")
+            result = subprocess.run(["git", "pull"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            message_win.baprint(f"GIT OUTPUT: \"{result.stdout.strip()}\"")
+            if "Already up to date." not in result.stdout:
+                message_win.baprint("Repository updated successfully.")
+                # Update or install dependencies
+                message_win.baprint("Updating dependencies...")
+                pip_result = subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                message_win.baprint(f"PIP OUTPUT: \"{pip_result.stdout.strip()}\"")  # Echo pip install output
+                message_win.baprint("Dependencies updated successfully.")
         except (subprocess.CalledProcessError, FileNotFoundError):
             message_win.baprint("Git not found in PATH. Skipping update...")
             message_win.baprint("Proceeding with the current version...")
