@@ -59,7 +59,7 @@ def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None):
             curses.endwin()
             sys.exit(0)
 
-        if ch == curses.KEY_MOUSE:
+        if ch == curses.KEY_MOUSE and hasattr(utils, "MOUSE_UP") and hasattr(utils, "MOUSE_DOWN"): 
             try: # Handle mouse scroll
                 mouse_event = curses.getmouse()
                 button_state = mouse_event[4]
@@ -67,7 +67,7 @@ def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None):
                 # Debug logging
                 #with open('mouse_debug.log', 'a') as f:
                 #    f.write(f"Mouse event details:\n")
-                #    f.write(f"  id: {mouse_event[0]}\n")
+                #    f.write(f"  id: {mouse_event[0]}\n")s
                 #    f.write(f"  x: {mouse_event[1]}\n")
                 #    f.write(f"  y: {mouse_event[2]}\n")
                 #    f.write(f"  z: {mouse_event[3]}\n")
