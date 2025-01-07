@@ -23,14 +23,14 @@ IS_WINDOWS = platform.system().lower() == 'windows'
 
 # Input Constants
 URL_PATTERN = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$'  # Pattern for validating URLs
-CTRL_D = 4                                           # ASCII value for Ctrl+D
-CTRL_N = 14                                          # ASCII value for Ctrl+N
+BREAK_HOTKEY = 4                                           # ASCII value for Ctrl+D
+SKIP_HOTKEY = 14                                          # ASCII value for Ctrl+N
 # Set CTRL_O to the value for CTRL+W (23) on macOS
 if platform.system().lower() == 'darwin':
-    CTRL_O = 23  # ASCII value for Ctrl+W
+    PGN_HOTKEY = 23  # ASCII value for Ctrl+W
 else:
-    CTRL_O = 15  # Default ASCII value for Ctrl+O
-CTRL_R = 18                                          # ASCII value for Ctrl+R
+    PGN_HOTKEY = 15  # Default ASCII value for Ctrl+O
+RESET_HOTKEY = 18                                          # ASCII value for Ctrl+R
 if hasattr(curses, 'BUTTON5_PRESSED'):
     MOUSE_DOWN = curses.BUTTON5_PRESSED if not IS_WINDOWS else WINDOWS_SCROLL_DOWN # Scroll down, scroll values vary between platforms
 if hasattr(curses, 'BUTTON4_PRESSED'):

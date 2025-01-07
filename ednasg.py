@@ -94,7 +94,8 @@ def _get_article_content(feeds):
         list: Selected articles with their content
     """
     rss_url = rss_feeds.get_rss_urls(feeds)
-    if rss_url is utils.CTRL_N:  # Manual input
+
+    if rss_url is utils.SKIP_HOTKEY:  # Manual input
         return articles.get_manual_article()
         
     while True:
