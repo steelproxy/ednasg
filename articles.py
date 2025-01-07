@@ -4,7 +4,6 @@ import feedparser
 import bottom_win
 import message_win
 import utils
-from oxylabs import oxylabs_search
 from pgn import pgn_search
 
 # Main Public Functions
@@ -145,7 +144,7 @@ def _select_articles(articles):
     
     if not filtered_articles:
         resize_callback()
-        filtered_articles = oxylabs_search()
+        filtered_articles = pgn_search()
         articles = filtered_articles
         if not articles:
             _handle_no_articles()
