@@ -137,6 +137,11 @@ def getstr(prompt, callback=None, hotkeys=None):
     """Get a single line of input from the user using our generic input handler."""
     return handle_input(prompt, callback=callback, max_input_len=None, hotkeys=hotkeys)
 
+def pause():
+    """Prompt user to hit a key to continue."""
+    print("Press any key to continue...")
+    return win.getch()
+
 # Helpers
 
 def _render_input(prompt, selected_option, cursor_pos, max_x):

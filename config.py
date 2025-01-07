@@ -2,6 +2,7 @@ import keyring
 import json
 import os
 import bottom_win
+import message_win
 import sys
 from time import sleep
 from jsonschema import validate, ValidationError
@@ -107,7 +108,7 @@ def _get_config_path():
 
 def _handle_no_config():
     """Handle no configuration found."""
-    bottom_win.print("No valid configuration found. Creating new config...")
+    message_win.baprint("No valid configuration found. Creating new config...")
     with open(_get_config_path(), 'w') as f:
         json.dump({}, f, indent=4)
 
@@ -117,8 +118,7 @@ def _handle_json_error(e):
     Args:
         e: Exception object
     """
-    bottom_win.print(f"JSON error: {e}. Press any key to continue...")
-    bottom_win.getch()
+    message_win.error(f"JSON error: {e}.")
     return {}
 
 def _handle_error(e):
@@ -127,11 +127,11 @@ def _handle_error(e):
     Args:
         e: Exception object
     """
-    bottom_win.print(f"Unexpected error: {e}. Press any key to continue...")
-    bottom_win.getch()
+    message_win.error(f"Unexpected error: {e}.")
     return {}
 
 def _handle_exit():
     """Handle exit."""
     bottom_win.print("Exiting due to fatal error...")
+    sleep(5)
     sys.exit()

@@ -28,7 +28,7 @@ def main(stdscr):
         news_script.display_scrollable_script(script)
         news_script.save_script_to_file(script)
 
-        utils._wait_for_exit()
+        utils.wait_for_exit()
 
     except KeyboardInterrupt:
         utils._handle_exit()

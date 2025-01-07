@@ -5,6 +5,7 @@ from news_script import display_scrollable_script
 import time
 import api_keyring
 from time import sleep
+import json
 
 def oxylabs_search():
     """Search for articles using Oxylabs."""
@@ -67,8 +68,10 @@ def _make_oxylabs_request(query, location, username, password):
         'query': query,
         'parse': True,
         'geo_location': location,  # Location targeting
+        'start_page': 1,
+        'pages': 10,
         'context': [
-            {'key': 'udm', 'value': 12},
+            #{'key': 'udm', 'value': 12},
             {'key': 'tbm', 'value': 'nws'},  # Ensures Google News results
             {'key': 'limit', 'value': 100}
         ],
@@ -84,9 +87,13 @@ def _make_oxylabs_request(query, location, username, password):
             timeout=30
         )
         response.raise_for_status()
+        # Dump the JSON response to a file
+        with open('oxylabs_response.json', 'w') as file:
+            json.dump(response.json(), file, indent=4)
     except requests.exceptions.RequestException as e:
-        bottom_win.baprint(f"Error making Oxylabs request: {str(e)}")
-        sleep(2)
+        message_win.error(f"Error making Oxylabs request: {str(e)}")
         return None
     
+
+
     return response.json()

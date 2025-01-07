@@ -84,6 +84,11 @@ def clear_buffer():
 def erase():
     """Erase the window."""
     win.erase()
+
+def error(message):
+    win.erase()
+    print(message, wrap=True)
+    bottom_win.pause()
     
 def get_multiline_input(prompt, end_key=4):    # Get multi-line user input
     """Get multiline input from the user with scroll and cursor support."""

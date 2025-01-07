@@ -92,7 +92,7 @@ def _set_oxylabs_credentials(username, password):
     try:
         keyring.set_password(SERVICE_ID, OXYLABS_USERNAME_ID, username)
         keyring.set_password(SERVICE_ID, OXYLABS_PASSWORD_ID, password)
-        message_win.baprint("Oxylabs credentials set.")
+        bottom_win.print("Oxylabs credentials set.")
         sleep(2)
         return True
         
@@ -130,12 +130,10 @@ def _handle_set_credentials_error(message="Unknown error"):
     Returns:
         bool: False to indicate failure
     """
-    message_win.baprint(f"Unable to set credentials. [{message}]")
-    sleep(2)
+    message_win.error(f"Unable to set credentials. [{message}]")
     return False
 
 def _handle_reset_credentials_error():
     """Handle reset credentials error."""
-    message_win.baprint("Unable to reset credentials.")
-    sleep(2)
+    message_win.error("Unable to reset credentials.")
     return None

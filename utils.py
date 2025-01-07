@@ -84,7 +84,7 @@ def update_repo():  # Update code from GitHub
         try:
             _do_binary_update()
         except Exception as e:
-            message_win.baprint(f"Unexpected exception occurred while updating: {e}")
+            message_win.error(f"Unexpected exception occurred while updating: {e}")
             message_win.baprint("Proceeding with current version...")
     else:
         try:
@@ -97,7 +97,7 @@ def update_repo():  # Update code from GitHub
             message_win.baprint("Git not found in PATH. Skipping update...")
             message_win.baprint("Proceeding with the current version...")
         except Exception as e:
-            message_win.baprint(f"Unexpected exception occured while updating: {e}")
+            message_win.error(f"Unexpected exception occured while updating: {e}")
 
 
 def _replace_binary(temp_dir, temp_path, current_exe):
@@ -126,7 +126,7 @@ def _replace_binary(temp_dir, temp_path, current_exe):
 
 def _do_binary_update():
     if not IS_WINDOWS:
-        message_win.baprint("Binary update is only supported on Windows right now, sorry.")
+        message_win.error("Binary update is only supported on Windows right now, sorry.")
         return
 
     # Get current executable path and version
@@ -167,7 +167,7 @@ def _do_binary_update():
             message_win.baprint(f"Failed to download update! Response code: {response.status_code}. Skipping update...")
             return
     except requests.exceptions.RequestException as e:
-        message_win.baprint(f"Failed to download update! Exception occurred: {e}. Skipping update...")
+        message_win.error(f"Failed to download update! Exception occurred: {e}. Skipping update...")
         return
 
     try:
@@ -185,7 +185,7 @@ def _do_binary_update():
         else:
             os.replace(temp_path, current_exe)
     except Exception as e:
-        message_win.baprint(f"Failed to download update! Exception occurred: {e}. Skipping update...")
+        message_win.error(f"Failed to download update! Exception occurred: {e}. Skipping update...")
         return
         
     message_win.baprint("Update downloaded! Restarting application...")

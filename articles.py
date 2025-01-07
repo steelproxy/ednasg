@@ -5,6 +5,7 @@ import bottom_win
 import message_win
 import utils
 from oxylabs import oxylabs_search
+from pgn import pgn_search
 
 # Main Public Functions
 def get_manual_article():
@@ -53,7 +54,7 @@ def _display_articles(articles, start_idx):
     for idx, line_number in _get_visible_articles(articles, start_idx, max_lines):
         article = articles[idx]
         title = _format_article_title(article['title'].replace('\n', ' '), max_width)
-        date_str = time.strftime("%m,%d,%y", article['date'])
+        date_str = time.strftime("%m,%d,%y", time.strptime(article['date'], "%m, %d, %y"))
         
         try:
             message_win.print(f"({date_str}) {idx + 1}. {title}")
@@ -210,12 +211,11 @@ def _parse_article_selection(choices, max_len):
 # Error Handling Functions
 def _handle_no_articles():
     """Handle case when no articles are found."""
-    message_win.print("No articles found!")
-    time.sleep(2)
+    message_win.error("No articles found!")
 
 def _handle_feed_error(error):
     """Handle feed parsing errors."""
-    message_win.print(f"Error fetching RSS feed: {error}.")
+    message_win.error(f"Error fetching RSS feed: {error}.")
     time.sleep(2)
 
 def _handle_invalid_selection():
