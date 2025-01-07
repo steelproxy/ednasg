@@ -60,7 +60,8 @@ pip install -r requirements.txt
 REM Print completion message
 echo Installation complete! Your virtual environment is ready.
 echo You can run your program now by running with .\start.bat or with these commands:
-echo .\start.bat
+echo .venv\Scripts\activate
+echo python ./ednasg.py
 
 pause
 endlocal

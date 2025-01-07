@@ -54,4 +54,6 @@ chmod +x ./start.sh
 # Print completion message
 echo "Installation complete!"
 echo "You can run your program now!"
-echo "Run these commands: ./start.sh"
+echo "Run these commands: source .venv/bin/activate"
+echo "                    python ./ednasg.py"
+echo "You may also just be able to run ./start.sh"
