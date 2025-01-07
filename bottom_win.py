@@ -30,7 +30,7 @@ def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None):
         callback: Optional function to call on each iteration
         max_input_len: Optional maximum input length
         hotkeys: Optional dict of {key: (function, description)} for special keys
-                Example: {CTRL_N: (lambda: None, "Skip")}
+                Example: {SKIP_HOTKEY: (lambda: None, "Skip")}
     """
     
     # Initialize input and cursor position
@@ -59,30 +59,31 @@ def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None):
             curses.endwin()
             sys.exit(0)
 
-        if ch == curses.KEY_MOUSE and hasattr(utils, "MOUSE_UP") and hasattr(utils, "MOUSE_DOWN"): 
-            try: # Handle mouse scroll
-                mouse_event = curses.getmouse()
-                button_state = mouse_event[4]
-                
-                # Debug logging
-                #with open('mouse_debug.log', 'a') as f:
-                #    f.write(f"Mouse event details:\n")
-                #    f.write(f"  id: {mouse_event[0]}\n")s
-                #    f.write(f"  x: {mouse_event[1]}\n")
-                #    f.write(f"  y: {mouse_event[2]}\n")
-                #    f.write(f"  z: {mouse_event[3]}\n")
-                #    f.write(f"  bstate: {bin(button_state)} ({button_state})\n")
-                #    f.write("---\n")
-                
-                # Standard curses scroll handling for other platforms
-                if (button_state & utils.MOUSE_UP or 
-                    button_state & (1 << 3)):  # Alternative scroll up
-                    ch = curses.KEY_UP
-                elif (button_state & utils.MOUSE_DOWN or 
-                    button_state & (1 << 4)):  # Alternative scroll down
-                    ch = curses.KEY_DOWN
-            except curses.error:
-                return cursor_pos
+        if utils.IS_WINDOWS:
+            if ch == curses.KEY_MOUSE and hasattr(utils, "MOUSE_UP") and hasattr(utils, "MOUSE_DOWN"): 
+                try: # Handle mouse scroll
+                    mouse_event = curses.getmouse()
+                    button_state = mouse_event[4]
+                    
+                    # Debug logging
+                    #with open('mouse_debug.log', 'a') as f:
+                    #    f.write(f"Mouse event details:\n")
+                    #    f.write(f"  id: {mouse_event[0]}\n")s
+                    #    f.write(f"  x: {mouse_event[1]}\n")
+                    #    f.write(f"  y: {mouse_event[2]}\n")
+                    #    f.write(f"  z: {mouse_event[3]}\n")
+                    #    f.write(f"  bstate: {bin(button_state)} ({button_state})\n")
+                    #    f.write("---\n")
+                    
+                    # Standard curses scroll handling for other platforms
+                    if (button_state & utils.MOUSE_UP or 
+                        button_state & (1 << 3)):  # Alternative scroll up
+                        ch = curses.KEY_UP
+                    elif (button_state & utils.MOUSE_DOWN or 
+                        button_state & (1 << 4)):  # Alternative scroll down
+                        ch = curses.KEY_DOWN
+                except curses.error:
+                    return cursor_pos
 
         # Check for hotkeys first
         if hotkeys and ch in hotkeys:
