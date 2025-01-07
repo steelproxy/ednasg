@@ -2,7 +2,7 @@ from pygooglenews import GoogleNews
 import bottom_win
 import message_win
 from time import sleep
-from datetime import datetime
+from time import strptime
 import pickle
 import re
 
@@ -97,7 +97,7 @@ def _format_entires_to_articles(results):
         formatted_articles.append({
             'title': article['title'],
             'summary': re.sub('<[^<]+?>', '', article['summary']),
-            'date': article['published']
+            'date': strptime(article['published'], "%a, %d %b %Y %H:%M:%S %Z")
         })
         
     return formatted_articles
