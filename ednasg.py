@@ -10,6 +10,8 @@ import utils
 import articles
 import news_script
 import api_keyring
+import time
+import scrape
 
 def main(stdscr):
     """Main application entry point."""
@@ -119,6 +121,31 @@ def _generate_script(client, selected_articles):
     Raises:
         Exception: If script generation fails
     """
+    message_win.clear_buffer()
+    message_win.baprint("HINT: if you have manually inputted an article, just hit enter.")
+    message_win.baprint("There are multiple ways to use the content from your selected articles. They both have their pros and cons.")
+    message_win.baprint("1: Summary (DEFAULT): The summary of these articles will be fed to ChatGPT for usage, this is by far the fastest, but may miss context.")
+    message_win.baprint("2: Newspaper4k Scraping: Each article will be scraped by url for it's content, some more complicated sites may not work with this method and it is slower.")
+    message_win.baprint("3: Headless browser: Still not implemented.")
+
+    while True:
+        scrape_method = bottom_win.getstr("Please input your method [1]: ", callback=message_win.print_buffer)
+        match scrape_method:
+            case "":
+                break
+            case "1":
+                break
+            case "2":
+                selected_articles = scrape.scrape_article_content(selected_articles)
+                break
+            case "3":
+                bottom_win.print("STILL NOT IMPLEMENTED! Sorry :(")
+                time.sleep(2)
+                continue
+            case _:
+                bottom_win.print("Invalid selection!")
+                time.sleep(2)
+            
     custom_prompt = message_win.get_multiline_input(
         "Enter custom prompt for ChatGPT (ctrl+d to end, empty for default):"
     )
