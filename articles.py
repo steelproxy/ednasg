@@ -181,8 +181,29 @@ def _select_articles(articles):
             original_idx = articles.index(filtered_article)
             original_indices.append(original_idx)
         selected_indices = original_indices
-        
-    return [articles[i] for i in selected_indices]
+
+    filtered_articles = [articles[i] for i in selected_indices]
+    article_scroll_idx = 0
+    while True:
+        confirmation = bottom_win.handle_input(
+            "Is your selection OK? (y/n) [y]: ",
+            lambda: _display_articles(filtered_articles, article_scroll_idx, view_url),
+            max_input_len=100,
+            hotkeys={
+                curses.KEY_DOWN: (scroll_down, "Scroll down"),
+                curses.KEY_UP: (scroll_up, "Scroll up"),
+                curses.KEY_RESIZE: (resize_callback, "Resize"),
+                ord('?'): (view_url_callback, "url callback")
+            }
+        )
+        if confirmation == "n":
+            return None
+        elif confirmation == "y" or confirmation == "":
+            break
+        bottom_win.print("Invalid input!")
+        time.sleep(2)
+
+    return filtered_articles
 
 # Helper Functions
 def _get_visible_articles(articles, start_idx, max_lines):
