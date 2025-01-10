@@ -5,3 +5,5 @@ windows-curses
 packaging 
 requests
 pygooglenews
+newspaper4k
+lxml_html_clean

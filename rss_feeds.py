@@ -6,6 +6,7 @@ import config
 from screen_manager import setup_windows
 import utils
 import api_keyring
+from pgn import pgn_search
 
 # Display Functions
 def display_feeds(feeds, start_idx):  # Main function to show RSS feeds
@@ -15,7 +16,7 @@ def display_feeds(feeds, start_idx):  # Main function to show RSS feeds
     max_width = width - 2       # Account for side margins
 
     message_win.erase()
-    message_win.print("Available RSS Feeds: [CTRL+C to quit, CTRL+N to input article, CTRL+O (CTRL+W on macOS) to search google news, CTRL+R to reset credentials]")
+    message_win.print(f"Available RSS Feeds: [CTRL+C to quit, CTRL+N manual input, {"CTRL+O" if utils.IS_WINDOWS else "CTRL+W"} google news, CTRL+R to reset credentials]")
     _display_feed_list(feeds, start_idx, max_lines, max_width)
 
 def _display_feed_list(feeds, start_idx, max_lines, max_width):  # Helper for feed display
@@ -57,24 +58,24 @@ def get_rss_urls(feeds):        # Main input handler for RSS URLs
         return None
     
     def skip_callback():        # Handles skip action
-        return utils.CTRL_N
+        return utils.SKIP_HOTKEY
     
-    def oxylabs_callback():
-        return utils.CTRL_O
+    def pgn_callback():
+        return utils.PGN_HOTKEY
     
     
     hotkeys = {                 # Define keyboard shortcuts
-        utils.CTRL_N: (skip_callback, "break"),
+        utils.SKIP_HOTKEY: (skip_callback, "break"),
         curses.KEY_DOWN: (lambda: handle_scroll(curses.KEY_DOWN), "scroll down"),
         curses.KEY_UP: (lambda: handle_scroll(curses.KEY_UP), "scroll up"),
         curses.KEY_RESIZE: (resize_callback, "resize"),
-        utils.CTRL_O: (oxylabs_callback, "oxylabs"),
-        utils.CTRL_R: (api_keyring.reset_credentials, "reset")
+        utils.PGN_HOTKEY: (pgn_callback, "pgn"),
+        utils.RESET_HOTKEY: (api_keyring.reset_credentials, "reset")
     }
     
     while True:
         selected_option = bottom_win.handle_input(prompt, callback=display_callback, hotkeys=hotkeys)
-        if selected_option in [utils.CTRL_N, utils.CTRL_O]:
+        if selected_option in [utils.SKIP_HOTKEY, utils.PGN_HOTKEY]:
             return selected_option
         
         if selected_option is None:      # Handle skip action
