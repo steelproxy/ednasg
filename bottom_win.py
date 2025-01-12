@@ -2,6 +2,8 @@ import curses
 import sys
 import utils
 import screen_manager
+from message_win import print_buffer
+
 global win
 
 def print(message):
@@ -137,6 +139,10 @@ def getch():
 def getstr(prompt, callback=None, hotkeys=None):
     """Get a single line of input from the user using our generic input handler."""
     return handle_input(prompt, callback=callback, max_input_len=None, hotkeys=hotkeys)
+
+def bgetstr(prompt, hotkeys=None):
+    """Get a single line of input from the user using our generic input handler."""
+    return handle_input(prompt, callback=print_buffer, max_input_len=None, hotkeys=hotkeys)
 
 def pause():
     """Prompt user to hit a key to continue."""

@@ -5,6 +5,7 @@ from time import sleep
 from time import strptime
 import pickle
 import re
+from bottom_win import bgetstr
 
 gn = GoogleNews()
 
@@ -12,9 +13,9 @@ def search_querytime():
     message_win.clear_buffer()
     message_win.print_msg("Searching by query/time...")
     message_win.print_msg("Hint: You can search for any keyword, within any specified time range. ex: \"news\",\"6mo\" or leave blank for any.")
-    query = bottom_win.getstr("Please enter your query: ", callback=message_win.print_buffer)
+    query = bgetstr("Please enter your query: ")
     message_win.print_msg(f"Query: {query}")
-    timespan = bottom_win.getstr("Time before: ", callback=message_win.print_buffer)
+    timespan = bgetstr("Time before: ")
     message_win.print_msg(f"Time: {timespan or "any"}")
     return _format_entires_to_articles(gn.search(query, when=timespan))
 
@@ -28,7 +29,7 @@ def search_geolocation():
     message_win.print_msg("They can also be formatted as their respective Google Canonical Location Name or Criteria ID")
     message_win.print_msg(" eg. \"geo_location\": \"1023191\"")
     message_win.print_msg("A list of these values is available at: https://developers.google.com/adwords/api/docs/appendix/geotargeting")
-    geolocation = bottom_win.getstr("Please enter the geolocation: ", callback=message_win.print_buffer)
+    geolocation = bgetstr("Please enter the geolocation: ")
     return _format_entires_to_articles(gn.geo_headlines(geolocation))
 
 def search_topic():
@@ -49,7 +50,7 @@ def search_topic():
     for i, topic in enumerate(topics, start=1):
         message_win.print_msg(f"{i}. {topic}")
     while True:
-        selected_topic = bottom_win.getstr("Please enter the name of the topic youd like to search for: ", callback=message_win.print_buffer)
+        selected_topic = bgetstr("Please enter the name of the topic youd like to search for: ")
         if selected_topic not in topics:
             bottom_win.print("Invalid topic selection! Please try again...")
             sleep(2)
@@ -68,7 +69,7 @@ def pgn_search():
     message_win.print_msg("4: Query/Time (eg. 'london' '6mo')")
 
     while True:
-        selection = bottom_win.getstr("Enter search method: ", callback=message_win.print_buffer)
+        selection = bgetstr("Enter search method: ")
         if selection not in ["1", "2", "3", "4"]:
             bottom_win.print("Invalid selection! Please try again...")
             sleep(2)

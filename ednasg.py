@@ -3,7 +3,6 @@ import signal
 from openai import OpenAI
 import config
 import bottom_win
-import message_win
 import rss_feeds
 import screen_manager
 import utils
@@ -15,7 +14,8 @@ import scrape
 import dalle
 from message_win import print_msg
 from message_win import clear_buffer
-
+from message_win import get_multiline_input
+from bottom_win import bgetstr
 
 def main(stdscr):
     """Main application entry point."""
@@ -78,7 +78,7 @@ def _initialize_openai_api():
         return client
     except Exception as e:
         print_msg(f"Error initializing OpenAI client: {str(e)}!")
-        choice = bottom_win.handle_input("Would you like to reset your credentials? [y/n]: ", callback=message_win.print_buffer)
+        choice = bgetstr("Would you like to reset your credentials? [y/n]: ")
         if choice == "y":
             api_keyring.reset_credentials()
         else:
@@ -128,7 +128,7 @@ def _generate_script(client, selected_articles):
     Raises:
         Exception: If script generation fails
     """
-    message_win.clear_buffer()
+    clear_buffer()
     print_msg("HINT: if you have manually inputted an article, just hit enter.")
     print_msg("There are multiple ways to use the content from your selected articles. They both have their pros and cons.")
     print_msg("1: Summary (DEFAULT): The summary of these articles will be fed to ChatGPT for usage, this is by far the fastest, but may miss context.")
@@ -136,7 +136,7 @@ def _generate_script(client, selected_articles):
     print_msg("3: Headless browser: Still not implemented.")
 
     while True:
-        scrape_method = bottom_win.getstr("Please input your method [1]: ", callback=message_win.print_buffer)
+        scrape_method = bgetstr("Please input your method [1]: ")
         match scrape_method:
             case "":
                 break
@@ -153,7 +153,7 @@ def _generate_script(client, selected_articles):
                 bottom_win.print("Invalid selection!")
                 time.sleep(2)
             
-    custom_prompt = message_win.get_multiline_input(
+    custom_prompt = get_multiline_input(
         "Enter custom prompt for ChatGPT (ctrl+d to end, empty for default):"
     )
     bottom_win.print("Generating news anchor script...")
@@ -166,13 +166,13 @@ def _generate_script(client, selected_articles):
             f"Unable to generate news script! caught exception: {str(e)}")
 
 def _dalle_prompt(client, script):
-    message_win.clear_buffer()
+    clear_buffer()
     print_msg("WARNING!! STILL IN DEVELOPMENT!")
     print_msg("Using OpenAI's DALL-E 3 AI photo generation tool this program can generate pictures to use in your news script.")
     print_msg("The program will first ask ChatGPT to analyse any keywords in your generated script and then use those as context for the photo generation.")
     print_msg("The results may not always be what you are looking for, but the functionality is here.")
     while True:
-        choice = bottom_win.getstr("Would you like to generate photos? (y/n) [n]: ")
+        choice = bgetstr("Would you like to generate photos? (y/n) [n]: ")
         if choice == "y":
             dalle.generate_photos(client, script)
             break
@@ -190,7 +190,7 @@ def _display_welcome_message():
     bottom_win.print("Press any button to continue...")
     if bottom_win.getch() == curses.KEY_RESIZE:
         screen_manager.handle_resize()
-    message_win.clear_buffer()
+    clear_buffer()
 
 
 if __name__ == "__main__":
