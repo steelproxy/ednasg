@@ -56,8 +56,19 @@ def display_scrollable_script(script):
 def get_save_filename():                              # Prompt for save location
     """Get the filename from user input with default option."""
     default_filename = "news_script.txt"
-    filename = bottom_win.getstr(f"Filename to save to (default: {default_filename}): ").strip()
-    return filename or default_filename
+    while True:
+        choice = bottom_win.getstr("Would you like to save this script? (y/n) [n]: ")
+        if choice not in ["y", "n", ""]:
+            bottom_win.print("Invalid selection!")
+            time.sleep(2)
+            continue
+        elif choice == "y":
+            filename = bottom_win.getstr(f"Filename to save to (default: {default_filename}): ").strip()
+            return filename or default_filename
+        else:
+            break
+    return ""
+    
 
 def write_script_to_file(filename, script):           # Handle file writing
     """Write the script content to the specified file."""
@@ -78,11 +89,13 @@ def save_script_to_file(script):                      # Main save function
         return False
 
     filename = get_save_filename()
-    if write_script_to_file(filename, script):        # Attempt to save
-        bottom_win.print(f"Script written to file: {filename}")
-        time.sleep(2)
-        return True
-    return False
+    if filename != "":
+        if write_script_to_file(filename, script):        # Attempt to save
+            bottom_win.print(f"Script written to file: {filename}")
+            time.sleep(2)
+            return True
+        return False
+    return True
 
 def _display_script(script, start_idx=0):             # Show current script view
     """Display the current portion of the script in the window."""

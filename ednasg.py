@@ -12,6 +12,10 @@ import news_script
 import api_keyring
 import time
 import scrape
+import dalle
+from message_win import print_msg
+from message_win import clear_buffer
+
 
 def main(stdscr):
     """Main application entry point."""
@@ -29,6 +33,9 @@ def main(stdscr):
         script = _generate_script(client, selected_articles)
         news_script.display_scrollable_script(script)
         news_script.save_script_to_file(script)
+
+        # DALL-E generation
+        use_dalle = _dalle_prompt(client, script)
 
         utils.wait_for_exit()
 
@@ -59,18 +66,18 @@ def _initialize_openai_api():
         Exception: If API initialization fails
     """
 
-    message_win.baprint("Finding OpenAI API key...")
+    print_msg("Finding OpenAI API key...")
     api_key = api_keyring.get_openai_api_key()
-    message_win.baprint(f"API KEY: {api_key[:4]}{'*' * (len(api_key)-4)}")
+    print_msg(f"API KEY: {api_key[:4]}{'*' * (len(api_key)-4)}")
     try:
-        message_win.baprint("Initializing OpenAI client...")
+        print_msg("Initializing OpenAI client...")
         client = OpenAI(api_key=api_key)
         # Test the client with a simple API call
         client.models.list()
-        message_win.baprint("OpenAI client initialized successfully!")
+        print_msg("OpenAI client initialized successfully!")
         return client
     except Exception as e:
-        message_win.baprint(f"Error initializing OpenAI client: {str(e)}!")
+        print_msg(f"Error initializing OpenAI client: {str(e)}!")
         choice = bottom_win.handle_input("Would you like to reset your credentials? [y/n]: ", callback=message_win.print_buffer)
         if choice == "y":
             api_keyring.reset_credentials()
@@ -79,7 +86,7 @@ def _initialize_openai_api():
 
 def _initialize_config():
     """Initialize feed configuration."""
-    message_win.baprint("Loading RSS config...")
+    print_msg("Loading RSS config...")
     feeds = config.load_config()
     _display_welcome_message()
     return feeds
@@ -122,11 +129,11 @@ def _generate_script(client, selected_articles):
         Exception: If script generation fails
     """
     message_win.clear_buffer()
-    message_win.baprint("HINT: if you have manually inputted an article, just hit enter.")
-    message_win.baprint("There are multiple ways to use the content from your selected articles. They both have their pros and cons.")
-    message_win.baprint("1: Summary (DEFAULT): The summary of these articles will be fed to ChatGPT for usage, this is by far the fastest, but may miss context.")
-    message_win.baprint("2: Newspaper4k Scraping: Each article will be scraped by url for it's content, some more complicated sites may not work with this method and it is slower.")
-    message_win.baprint("3: Headless browser: Still not implemented.")
+    print_msg("HINT: if you have manually inputted an article, just hit enter.")
+    print_msg("There are multiple ways to use the content from your selected articles. They both have their pros and cons.")
+    print_msg("1: Summary (DEFAULT): The summary of these articles will be fed to ChatGPT for usage, this is by far the fastest, but may miss context.")
+    print_msg("2: Newspaper4k Scraping: Each article will be scraped by url for it's content, some more complicated sites may not work with this method and it is slower.")
+    print_msg("3: Headless browser: Still not implemented.")
 
     while True:
         scrape_method = bottom_win.getstr("Please input your method [1]: ", callback=message_win.print_buffer)
@@ -158,11 +165,28 @@ def _generate_script(client, selected_articles):
         utils._fatal_error(
             f"Unable to generate news script! caught exception: {str(e)}")
 
+def _dalle_prompt(client, script):
+    message_win.clear_buffer()
+    print_msg("WARNING!! STILL IN DEVELOPMENT!")
+    print_msg("Using OpenAI's DALL-E 3 AI photo generation tool this program can generate pictures to use in your news script.")
+    print_msg("The program will first ask ChatGPT to analyse any keywords in your generated script and then use those as context for the photo generation.")
+    print_msg("The results may not always be what you are looking for, but the functionality is here.")
+    while True:
+        choice = bottom_win.getstr("Would you like to generate photos? (y/n) [n]: ")
+        if choice == "y":
+            dalle.generate_photos(client, script)
+            break
+        elif choice in ["n", ""]:
+            break
+        else:
+            bottom_win.print("Invalid selection!")
+            time.sleep(2)
+
 # Display Functions
 
 def _display_welcome_message():
     """Display welcome message and wait for user input."""
-    message_win.baprint("Welcome to ednasg!")
+    print_msg("Welcome to ednasg!")
     bottom_win.print("Press any button to continue...")
     if bottom_win.getch() == curses.KEY_RESIZE:
         screen_manager.handle_resize()
