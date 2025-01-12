@@ -10,31 +10,31 @@ gn = GoogleNews()
 
 def search_querytime():
     message_win.clear_buffer()
-    message_win.baprint("Searching by query/time...")
-    message_win.baprint("Hint: You can search for any keyword, within any specified time range. ex: \"news\",\"6mo\" or leave blank for any.")
+    message_win.print_msg("Searching by query/time...")
+    message_win.print_msg("Hint: You can search for any keyword, within any specified time range. ex: \"news\",\"6mo\" or leave blank for any.")
     query = bottom_win.getstr("Please enter your query: ", callback=message_win.print_buffer)
-    message_win.baprint(f"Query: {query}")
+    message_win.print_msg(f"Query: {query}")
     timespan = bottom_win.getstr("Time before: ", callback=message_win.print_buffer)
-    message_win.baprint(f"Time: {timespan or "any"}")
+    message_win.print_msg(f"Time: {timespan or "any"}")
     return _format_entires_to_articles(gn.search(query, when=timespan))
 
 def search_geolocation():
     message_win.clear_buffer()
-    message_win.baprint("Searching by geolocation...")
-    message_win.baprint("Hint: geolocation can be formatted in several ways.")
-    message_win.baprint(" eg. \"geo_location\": \"California,United States\"")
-    message_win.baprint(" eg. \"geo_location\": \"United Kingdom\"")
-    message_win.baprint(" eg. \"geo_location\": \"lat: 47.6205, lng: -122.3493, rad: 25000\"")
-    message_win.baprint("They can also be formatted as their respective Google Canonical Location Name or Criteria ID")
-    message_win.baprint(" eg. \"geo_location\": \"1023191\"")
-    message_win.baprint("A list of these values is available at: https://developers.google.com/adwords/api/docs/appendix/geotargeting")
+    message_win.print_msg("Searching by geolocation...")
+    message_win.print_msg("Hint: geolocation can be formatted in several ways.")
+    message_win.print_msg(" eg. \"geo_location\": \"California,United States\"")
+    message_win.print_msg(" eg. \"geo_location\": \"United Kingdom\"")
+    message_win.print_msg(" eg. \"geo_location\": \"lat: 47.6205, lng: -122.3493, rad: 25000\"")
+    message_win.print_msg("They can also be formatted as their respective Google Canonical Location Name or Criteria ID")
+    message_win.print_msg(" eg. \"geo_location\": \"1023191\"")
+    message_win.print_msg("A list of these values is available at: https://developers.google.com/adwords/api/docs/appendix/geotargeting")
     geolocation = bottom_win.getstr("Please enter the geolocation: ", callback=message_win.print_buffer)
     return _format_entires_to_articles(gn.geo_headlines(geolocation))
 
 def search_topic():
     message_win.clear_buffer()
-    message_win.baprint("Searching by topic...")
-    message_win.baprint("Available Topics: ")
+    message_win.print_msg("Searching by topic...")
+    message_win.print_msg("Available Topics: ")
     topics = [
         "World",
         "Nation",
@@ -47,7 +47,7 @@ def search_topic():
     ]
     # Print each topic with its corresponding number
     for i, topic in enumerate(topics, start=1):
-        message_win.baprint(f"{i}. {topic}")
+        message_win.print_msg(f"{i}. {topic}")
     while True:
         selected_topic = bottom_win.getstr("Please enter the name of the topic youd like to search for: ", callback=message_win.print_buffer)
         if selected_topic not in topics:
@@ -60,12 +60,12 @@ def search_topic():
 def pgn_search():
     """Search for articles using pygooglenews."""
     message_win.clear_buffer()
-    message_win.baprint("Google News SERP Scraping mode activated.")
-    message_win.baprint("You can search in a few different ways:")
-    message_win.baprint("1: Top Stories")
-    message_win.baprint("2: Topic")
-    message_win.baprint("3: Geolocation")
-    message_win.baprint("4: Query/Time (eg. 'london' '6mo')")
+    message_win.print_msg("Google News SERP Scraping mode activated.")
+    message_win.print_msg("You can search in a few different ways:")
+    message_win.print_msg("1: Top Stories")
+    message_win.print_msg("2: Topic")
+    message_win.print_msg("3: Geolocation")
+    message_win.print_msg("4: Query/Time (eg. 'london' '6mo')")
 
     while True:
         selection = bottom_win.getstr("Enter search method: ", callback=message_win.print_buffer)

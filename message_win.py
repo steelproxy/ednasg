@@ -72,7 +72,7 @@ def print_buffer():
     for message in message_buffer[start_idx:]:
         print(message, wrap=True)
 
-def baprint(message):
+def print_msg(message):
     """Print a message and add it to the buffer."""
     message_buffer.append(message)
     print_buffer()

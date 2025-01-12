@@ -84,31 +84,31 @@ def signal_handler(sig, frame):  # Handle program termination
 
 def update_repo():  # Update code from GitHub
     """Run the update script to fetch the latest code from GitHub."""
-    message_win.baprint("Checking for updates...")
+    message_win.print_msg("Checking for updates...")
     # determine if application is a script file or frozen exe
     if getattr(sys, 'frozen', False):
         try:
             _do_binary_update()
         except Exception as e:
             message_win.error(f"Unexpected exception occurred while updating: {e}")
-            message_win.baprint("Proceeding with current version...")
+            message_win.print_msg("Proceeding with current version...")
     else:
         try:
             subprocess.run(["git", "--version"],
                            check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # Verify git installation
             # Pull latest changes
             result = subprocess.run(["git", "pull"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            message_win.baprint(f"GIT OUTPUT: \"{result.stdout.strip()}\"")
+            message_win.print_msg(f"GIT OUTPUT: \"{result.stdout.strip()}\"")
             if "Already up to date." not in result.stdout:
-                message_win.baprint("Repository updated successfully.")
+                message_win.print_msg("Repository updated successfully.")
                 # Update or install dependencies
-                message_win.baprint("Updating dependencies...")
+                message_win.print_msg("Updating dependencies...")
                 pip_result = subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-                message_win.baprint(f"PIP OUTPUT: \"{pip_result.stdout.strip()}\"")  # Echo pip install output
-                message_win.baprint("Dependencies updated successfully.")
+                message_win.print_msg(f"PIP OUTPUT: \"{pip_result.stdout.strip()}\"")  # Echo pip install output
+                message_win.print_msg("Dependencies updated successfully.")
         except (subprocess.CalledProcessError, FileNotFoundError):
-            message_win.baprint("Git not found in PATH. Skipping update...")
-            message_win.baprint("Proceeding with the current version...")
+            message_win.print_msg("Git not found in PATH. Skipping update...")
+            message_win.print_msg("Proceeding with the current version...")
         except Exception as e:
             message_win.error(f"Unexpected exception occured while updating: {e}")
 
@@ -158,7 +158,7 @@ def _do_binary_update():
 
     # Check if update is needed
     if latest_version <= current_version:
-        message_win.baprint(f"Already running latest version {current_version}")
+        message_win.print_msg(f"Already running latest version {current_version}")
         return
 
     # Find matching asset for current platform
@@ -169,15 +169,15 @@ def _do_binary_update():
             break
 
     if not asset:
-        message_win.baprint(f"No release was found for platform: {system}! Skipping update...")
+        message_win.print_msg(f"No release was found for platform: {system}! Skipping update...")
         return
 
     # Download new version
-    message_win.baprint(f"Downloading update {latest_version}...")
+    message_win.print_msg(f"Downloading update {latest_version}...")
     try:
         response = requests.get(asset['browser_download_url'], stream=True)
         if response.status_code != 200:
-            message_win.baprint(f"Failed to download update! Response code: {response.status_code}. Skipping update...")
+            message_win.print_msg(f"Failed to download update! Response code: {response.status_code}. Skipping update...")
             return
     except requests.exceptions.RequestException as e:
         message_win.error(f"Failed to download update! Exception occurred: {e}. Skipping update...")
@@ -201,7 +201,7 @@ def _do_binary_update():
         message_win.error(f"Failed to download update! Exception occurred: {e}. Skipping update...")
         return
         
-    message_win.baprint("Update downloaded! Restarting application...")
+    message_win.print_msg("Update downloaded! Restarting application...")
     sys.exit(0)
 
 def wait_for_exit():

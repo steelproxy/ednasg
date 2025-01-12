@@ -4,6 +4,7 @@ import message_win
 import bottom_win
 import os
 from time import sleep
+from message_win import print_msg
 
 # Application Constants
 SERVICE_ID = "ednasg"
@@ -42,8 +43,8 @@ def reset_credentials(callback=None):
         - Prints status messages to bottom window
         - Sleeps for 2 seconds after completion
     """
-    message_win.baprint("Resetting credentials...")
-        
+    print_msg("Resetting credentials...")
+    
     api_key = bottom_win.getstr("Enter your OpenAI API key: ", callback=message_win.print_buffer)
     if not _set_openai_api_key(api_key):
         return _handle_reset_credentials_error()
