@@ -28,17 +28,6 @@ python3.12 -m venv .venv
 echo "Activating the virtual environment..."
 source .venv/bin/activate
 
-# Create requirements.txt if it doesn't exist
-cat <<EOL > requirements.txt
-jsonschema
-feedparser
-openai
-keyring
-requests
-packaging
-pygooglenews
-EOL
-
 # Install required packages
 echo "Installing required packages..."
 pip install --upgrade pip

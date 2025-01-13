@@ -36,22 +36,6 @@ REM Activate the virtual environment
 echo Activating the virtual environment...
 call .venv\Scripts\activate
 
-REM Create requirements.txt if it doesn't exist
-(
-    echo requests
-    echo jsonschema
-    echo feedparser
-    echo openai
-    echo keyring
-    echo windows-curses
-    echo packaging
-    echo pygooglenews
-) > requirements.txt
-
-REM Create start script
-echo .venv\Scripts\activate > start.bat
-echo python ednasg.py >> start.bat
-
 REM Install required packages
 echo Installing required packages...
 pip install --upgrade pip
