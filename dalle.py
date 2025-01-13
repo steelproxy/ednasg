@@ -4,6 +4,9 @@ import requests
 from message_win import clear_buffer
 from message_win import print_msg
 import utils
+import aiohttp
+import asyncio
+import utils
 
 CHATGPT_ROLE = """You are a helpful assistant that analyzes a generated 99 second social media news script to write multiple image descriptions for the DALLE-3 API. 
 You ensure each description adheres to DALL-E 3's safety standards and does not include any prohibited content. 
@@ -11,10 +14,41 @@ You are given a script and you will need to write a given number of image descri
 You will provide a list of descriptions, one per line, with no extra newlines between descriptions, and nothing else.
 """
 
-def generate_photos(client, script, num_images=3):
+async def _generate_single_image(client, description, identifier, resolution, image_quality):
+    print_msg(f"photo {identifier}: description: {description}")
+    print_msg(f"photo {identifier}: Generating photo at {resolution} resolution")
+    try:
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=description,
+            size=resolution,
+            quality=image_quality,
+            n=1,
+        )
+        print_msg(f"Response for photo {identifier}: {response}")
+
+        image_url = response.data[0].url
+        print_msg(f"Image URL for photo {identifier}: {image_url}")
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(image_url) as img_response:
+                image_data = await img_response.read()
+
+        with open(f"generated_image_{identifier}.png", "wb") as file:
+            file.write(image_data)
+        print_msg(f"Image {identifier} saved as 'generated_image_{identifier}.png'")
+
+    except Exception as e:
+        utils.handle_openai_error(e, f"photo {identifier} thread")
+
+def generate_photos(client, script, num_images=3, image_quality="standard", resolution="1024x1024"):
     clear_buffer()
+    bottom_win.print("ChatGPT Generating Descriptions...")
     print_msg("DALLE-3 photo generation activated...")
-    print_msg("Analyzing script for keywords to feed to DALLE...")
+    print_msg(f"Generating {num_images} images...")
+    print_msg(f"Image quality: {image_quality}")
+    print_msg(f"Image resolution: {resolution}")
+    print_msg("Analyzing script to generate descriptions for DALLE-3...")
 
     try:
         response = client.chat.completions.create(
@@ -22,12 +56,8 @@ def generate_photos(client, script, num_images=3):
             messages=_create_gpt_message(script, num_images),
             temperature=0.7
         )
-    except openai.error.OpenAIError as e:
-        print_msg(f"Error during GPT API call: {e}")
-        utils.pause()
-        return
     except Exception as e:
-        print_msg(f"Unknown error during GPT API call: {e}")
+        utils.handle_openai_error(e, "GPT API call")
         utils.pause()
         return
 
@@ -43,40 +73,30 @@ def generate_photos(client, script, num_images=3):
         utils.pause()
         return
 
-    for i, dalle_description in enumerate(dalle_descriptions[:num_images]):
-        print_msg(f"Description {i+1}: {dalle_description}")
-
-        print_msg(f"Generating 1 photo of 1024x1024 resolution for description {i+1}.")
-
-        try:
-            response = client.images.generate(
-                model="dall-e-3",
-                prompt=dalle_description,
-                size="1024x1024",
-                quality="standard",
-                n=1,
+    bottom_win.print("DALLE-3 Generating Images...")
+    
+    # Create and run async tasks
+    async def run_tasks():
+        tasks = [
+            _generate_single_image(
+                client, 
+                description, 
+                i, 
+                resolution, 
+                image_quality
             )
-        except openai.error.OpenAIError as e:
-            print_msg(f"Error during DALL·E API call for description {i+1}: {e}")
-            utils.pause()
-            return
-        except Exception as e:
-            print_msg(f"Unknown error during DALL·E API call for description {i+1}: {e}")
-            utils.pause()
-            return
+            for i, description in enumerate(dalle_descriptions[:num_images])
+        ]
+        await asyncio.gather(*tasks)
 
-        print_msg(f"Response for description {i+1}: {response}")
+    # Run the async tasks properly
+    asyncio.run(run_tasks())
 
-        image_url = response.data[0].url
-        print_msg(f"Image URL for description {i+1}: {image_url}")
-        image_data = requests.get(image_url).content
-        with open(f"generated_image_{i+1}.png", "wb") as file:
-            file.write(image_data)
-        print_msg(f"Image for description {i+1} saved as 'generated_image_{i+1}.png'")
+    bottom_win.bgetstr("DALLE-3 photo generation complete. Press enter to exit...")
 
 def _create_gpt_message(script, num_images):
     """Create the message structure for the GPT API request."""
     return [
         {"role": "system", "content": CHATGPT_ROLE},
-        {"role": "user", "content": f"script: {script}\n"}
+        {"role": "user", "content": f"number of images: {num_images}\nscript: {script}\n"}
     ]
