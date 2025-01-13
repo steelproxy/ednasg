@@ -35,7 +35,7 @@ def main(stdscr):
         news_script.save_script_to_file(script)
 
         # DALL-E generation
-        use_dalle = _dalle_prompt(client, script)
+        _dalle_prompt(client, script)
 
         utils.wait_for_exit()
 
@@ -153,9 +153,27 @@ def _generate_script(client, selected_articles):
                 bottom_win.print("Invalid selection!")
                 time.sleep(2)
             
-    custom_prompt = get_multiline_input(
-        "Enter custom prompt for ChatGPT (ctrl+d to end, empty for default):"
-    )
+    clear_buffer()
+    print_msg("Your script will be generated using a prompt to ChatGPT.")
+    print_msg("You can enter a custom prompt to use, or leave it blank to use the default prompt.")
+    print_msg(f"The default prompt is: {news_script.DEFAULT_GPT_PROMPT}")
+    print_msg("If you would like to use the default prompt, just press enter.")
+    print_msg("Otherwise, answer 'y' to the prompt below.")
+    while True:
+        choice = bgetstr("Would you like to make a custom prompt? (y/n) [n]: ")
+        if choice in ["n", ""]:
+            custom_prompt = news_script.DEFAULT_GPT_PROMPT
+            break
+        elif choice == "y":
+            custom_prompt = get_multiline_input(
+                "Enter custom prompt for ChatGPT (ctrl+d to end, empty for default):"
+            )
+            break
+        else:
+            bottom_win.print("Invalid selection!")
+            time.sleep(2)
+            continue
+
     bottom_win.print("Generating news anchor script...")
     try:
         script = news_script.get_script(
@@ -171,10 +189,58 @@ def _dalle_prompt(client, script):
     print_msg("Using OpenAI's DALL-E 3 AI photo generation tool this program can generate pictures to use in your news script.")
     print_msg("The program will first ask ChatGPT to analyse any keywords in your generated script and then use those as context for the photo generation.")
     print_msg("The results may not always be what you are looking for, but the functionality is here.")
+    print_msg("The more photos you generate, the more expensive it will be.")
     while True:
         choice = bgetstr("Would you like to generate photos? (y/n) [n]: ")
         if choice == "y":
-            dalle.generate_photos(client, script)
+            while True:
+                num_images = bgetstr("How many images would you like to generate? [3]: ")
+                if num_images == "":
+                    num_images = 3
+                    break
+                else:
+                    try:
+                        num_images = int(num_images)
+                        break
+                    except ValueError:
+                        bottom_win.print("Invalid input! Please enter a number.")
+                        time.sleep(2)
+                        continue
+
+            print_msg("There are two image quality options, standard and hd.")
+            print_msg("Standard is the default and cheaper, but the images may not be as high quality.")
+            print_msg("HD is more expensive and takes longer to generate, but the images will be of higher quality.")
+            while True:
+                image_quality = bgetstr("What quality would you like the images to be? (standard/hd) [standard]: ")
+                if image_quality in ["standard", "hd"]:
+                    break
+                elif image_quality == "":
+                    image_quality = "standard"
+                    break
+                else:
+                    bottom_win.print("Invalid selection!")
+                    time.sleep(2)
+                    continue
+
+            DALLE_RESOLUTIONS = {
+                "1": {"size": "1024x1024", "description": "Square format"},
+                "2": {"size": "1792x1024", "description": "Landscape format"},
+                "3": {"size": "1024x1792", "description": "Portrait format"}
+            }    
+            print_msg("There are several image resolutions to choose from:")
+            for key, value in DALLE_RESOLUTIONS.items():
+                print_msg(f"{key}. {value['size']} - {value['description']}")
+            
+            while True:
+                choice = bgetstr("Please select a resolution (higher cost, higher resolution) [1]: ")
+                if choice == "" or choice in DALLE_RESOLUTIONS:
+                    resolution = DALLE_RESOLUTIONS[choice or "1"]["size"]
+                    break
+                else:
+                    bottom_win.print("Invalid selection!")
+                    time.sleep(2)
+
+            dalle.generate_photos(client, script, num_images, image_quality, resolution)
             break
         elif choice in ["n", ""]:
             break
