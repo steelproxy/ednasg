@@ -13,11 +13,16 @@ def get_script(client, articles, custom_prompt):      # Generate news script usi
     _validate_articles(articles)
     messages = _create_gpt_messages(articles, custom_prompt)
     
-    response = client.chat.completions.create(        # Get response from OpenAI API
-        model="gpt-4o",
-        messages=messages,
-        temperature=0.7
-    )
+    try:
+        response = client.chat.completions.create(        # Get response from OpenAI API
+            model="gpt-4o",
+            messages=messages,
+            temperature=0.7
+        )
+    except Exception as e:
+        utils.handle_openai_error(e, "GPT API call")
+        utils.pause()
+        return
 
     if not hasattr(response, 'choices') or not response.choices:          # Check response format
         raise ValueError("API response does not contain 'choices'")
