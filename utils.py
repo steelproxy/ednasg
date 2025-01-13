@@ -232,13 +232,13 @@ def handle_openai_error(e, prompt):
         message_win.print_msg(f"{prompt}: Rate limit reached. Please wait before trying again.")
     elif isinstance(e, openai.AuthenticationError):
         message_win.print_msg(f"{prompt}: Authentication error. Please check your API key.")
-    elif isinstance(e, openai.PermissionError):
+    elif isinstance(e, openai.PermissionDeniedError):
         message_win.print_msg(f"{prompt}: Permission error. Your API key may not have access to this resource.")
-    elif isinstance(e, openai.InvalidRequestError):
+    elif isinstance(e, openai.BadRequestError):
         message_win.print_msg(f"{prompt}: Invalid request: {str(e)}")
     elif isinstance(e, (openai.APIError, openai.Timeout, openai.APIConnectionError)):
         message_win.print_msg(f"{prompt}: API error occurred: {str(e)}. Please try again.")
-    elif isinstance(e, openai.ServiceUnavailableError):
+    elif isinstance(e, openai.APIStatusError):
         message_win.print_msg(f"{prompt}: OpenAI service is currently unavailable. Please try again later.")
     else:
         message_win.print_msg(f"{prompt}: An unexpected error occurred: {str(e)}")
