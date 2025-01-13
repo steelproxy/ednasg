@@ -106,7 +106,7 @@ def _get_config_path():
 
 def _handle_no_config():
     """Handle no configuration found."""
-    message_win.baprint("No valid configuration found. Creating new config...")
+    message_win.print_msg("No valid configuration found. Creating new config...")
     with open(_get_config_path(), 'w') as f:
         json.dump({}, f, indent=4)
 

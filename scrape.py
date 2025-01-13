@@ -6,7 +6,7 @@ def scrape_article_content(articles):
     message_win.clear_buffer()
     transformed_articles = []
     for article in articles:
-        message_win.baprint(f"Scraping article {article["url"]}...")
+        message_win.print_msg(f"Scraping article {article["url"]}...")
         news_article = newspaper.Article(article['url'])
         news_article.download()
         news_article.parse()

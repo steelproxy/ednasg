@@ -66,13 +66,41 @@ def clear():          # Clear window contents
 def print_buffer():
     """Print the buffer."""
     erase()
-    max_y, _ = win.getmaxyx()
-    # If buffer exceeds window height, only show newest messages that fit
-    start_idx = max(0, len(message_buffer) - max_y + 1)  # +1 for safe padding
-    for message in message_buffer[start_idx:]:
+    max_y, max_x = win.getmaxyx()
+    available_width = max_x - 2  # Subtract 2 for safe padding
+    
+    # Calculate lines needed for each message
+    messages_with_lines = []
+    for message in message_buffer:
+        lines = []
+        remaining = message
+        while remaining:
+            if len(remaining) <= available_width:
+                lines.append(remaining)
+                break
+            split_point = remaining[:available_width].rfind(' ')
+            if split_point == -1:
+                split_point = available_width
+            lines.append(remaining[:split_point])
+            remaining = remaining[split_point:].lstrip()
+        messages_with_lines.append((message, len(lines)))
+    
+    # Calculate total lines needed and determine starting message
+    total_lines = 0
+    start_idx = len(messages_with_lines) - 1
+    while start_idx >= 0:
+        total_lines += messages_with_lines[start_idx][1]
+        if total_lines > max_y - 1:  # Leave 1 line for padding
+            start_idx += 1  # Go back one message since we exceeded the space
+            break
+        start_idx -= 1
+    start_idx = max(0, start_idx)
+    
+    # Print messages from the calculated starting point
+    for message, _ in messages_with_lines[start_idx:]:
         print(message, wrap=True)
 
-def baprint(message):
+def print_msg(message):
     """Print a message and add it to the buffer."""
     message_buffer.append(message)
     print_buffer()

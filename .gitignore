@@ -165,3 +165,4 @@ news_script.txt
 .DS_Store
 test.txt
 rss_feeds.json
+*.png

@@ -145,7 +145,7 @@ def _select_articles(articles):
     
     def view_url_callback():
         nonlocal view_url
-        view_url = True
+        view_url = not view_url
         return None
     
     if not filtered_articles:
