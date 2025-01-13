@@ -7,7 +7,7 @@ import utils
 
 CHATGPT_ROLE = """You are a helpful assistant that analyzes a generated 99 second social media news script to write multiple image descriptions for the DALLE-3 API. 
 You ensure each description adheres to DALL-E 3's safety standards and does not include any prohibited content. 
-You are given a script and you will need to write a number of image descriptions for scenes relevant to the script.
+You are given a script and you will need to write a given number of image descriptions for scenes relevant to the script.
 You will provide a list of descriptions, one per line, with no extra newlines between descriptions, and nothing else.
 """
 
