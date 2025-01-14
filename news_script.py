@@ -43,7 +43,7 @@ def display_scrollable_script(script):
         _display_script(script, script_scroll_idx)
         
         ch = bottom_win.getch()
-        if ch == curses.KEY_MOUSE:
+        if hasattr(utils, "MOUSE_UP") and ch == curses.KEY_MOUSE:
             try:
                 mouse_event = curses.getmouse()
                 if mouse_event[4] & utils.MOUSE_UP:
