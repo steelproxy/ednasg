@@ -161,7 +161,9 @@ def get_multiline_input(prompt, end_key=4):    # Get multi-line user input
 def handle_input(ch, cursor_x, cursor_y, scroll_offset, input_str, max_x, max_y):    # Process input
     """Handle different types of input and return updated cursor positions."""
     match ch:
-        case curses.KEY_MOUSE:                         # Handle mouse events
+        case curses.KEY_MOUSE: 
+            if not hasattr(utils, "MOUSE_UP"): # Handle mouse events
+                return
             try:
                 mouse_event = curses.getmouse()
                 button_state = mouse_event[4]
