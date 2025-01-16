@@ -162,7 +162,7 @@ def handle_input(ch, cursor_x, cursor_y, scroll_offset, input_str, max_x, max_y)
     """Handle different types of input and return updated cursor positions."""
     match ch:
         case curses.KEY_MOUSE: 
-            if not hasattr(utils, "MOUSE_UP"): # Handle mouse events
+            if not utils.IS_WINDOWS: # Handle mouse events
                 return
             try:
                 mouse_event = curses.getmouse()
