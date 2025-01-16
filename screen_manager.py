@@ -1,7 +1,6 @@
 import curses
 import message_win
 import bottom_win
-from utils import IS_WINDOWS
 
 global stdscr
 
@@ -17,8 +16,7 @@ def _setup_cursor_and_input():
     curses.curs_set(1)      # Make cursor visible (1 = visible, 0 = invisible)
     curses.noecho()         # Disable character echoing to screen
     stdscr.keypad(1)        # Enable special key handling
-    if IS_WINDOWS:
-        curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
+    curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
 
 def _setup_colors():
     """Initialize color settings."""
