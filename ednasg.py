@@ -15,6 +15,7 @@ import dalle
 from message_win import print_msg
 from message_win import clear_buffer
 from message_win import get_multiline_input
+from message_win import swap_buffer
 from bottom_win import bgetstr
 
 def main(stdscr):
@@ -157,11 +158,14 @@ def _generate_script(client, selected_articles):
     print_msg("Your script will be generated using a prompt to ChatGPT.")
     print_msg("You can enter a custom prompt to use, or leave it blank to use the default prompt.")
     print_msg(f"The default prompt is: {news_script.DEFAULT_GPT_PROMPT}")
-    print_msg("If you would like to use the default prompt, just press enter.")
-    print_msg("Otherwise, answer 'y' to the prompt below.")
+    print_msg("If you would like to use the default prompt, just press enter. Otherwise, answer 'y' to the prompt below.")
+    print_msg("If you would like to export the articles, answer 'e' to the prompt below.")
     while True:
-        choice = bgetstr("Would you like to make a custom prompt? (y/n) [n]: ")
-        if choice in ["n", ""]:
+        choice = bgetstr("Would you like to make a custom prompt? (y/n/e) [n]: ")
+        if choice == "e":
+            _export_articles(selected_articles)
+            continue
+        elif choice in ["n", ""]:
             custom_prompt = news_script.DEFAULT_GPT_PROMPT
             break
         elif choice == "y":
@@ -182,6 +186,24 @@ def _generate_script(client, selected_articles):
     except Exception as e:
         utils._fatal_error(
             f"Unable to generate news script! caught exception: {str(e)}")
+
+def _export_articles(selected_articles):
+    """Export articles to a file."""
+    saved_buffer = swap_buffer([])
+    print_msg("Exporting articles...")
+    for article in selected_articles:
+        try:
+            with open('articles_export.txt', 'a', encoding='utf-8', errors='ignore') as f:
+                f.write(f"- {article['title']}\n")
+                f.write(f"Link: {utils.sanitize_output(article['url'])}\n")
+                f.write("\n")
+        except IOError as e:
+            print_msg(f"Error writing to file: {e}")
+            bottom_win.bgetstr("Press any button to continue...")
+            return
+    print_msg("Articles exported successfully!")
+    bottom_win.bgetstr("Press any button to continue...")
+    swap_buffer(saved_buffer)
 
 def _dalle_prompt(client, script):
     clear_buffer()
