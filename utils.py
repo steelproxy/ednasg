@@ -71,6 +71,20 @@ def sanitize_input_char(ch):
         return chr(ch)
     return ''
 
+def sanitize_output(str):
+    """Sanitize output to ensure it is a valid string.
+    
+    Args:
+        str: The string to sanitize
+        
+    Returns:   
+        str: The sanitized string
+    """
+    return ''.join(
+        sanitize_input_char(ord(char))
+        for char in str
+    )
+
 def is_valid_url(url):  # Check if URL format is valid
     """Basic URL validation using regex."""
     return re.match(URL_PATTERN, url) is not None
