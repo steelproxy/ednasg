@@ -105,6 +105,14 @@ def print_msg(message):
     message_buffer.append(message)
     print_buffer()
 
+def swap_buffer(new_buffer):
+    """Swap the buffer with a new buffer."""
+    global message_buffer
+    saved_buffer = message_buffer
+    message_buffer = new_buffer
+    print_buffer()
+    return saved_buffer
+
 def clear_buffer():
     """Clear the buffer."""
     message_buffer.clear()
