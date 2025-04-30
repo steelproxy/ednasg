@@ -19,7 +19,6 @@ async def _generate_single_image(client, description, identifier, resolution, im
     print_msg(f"photo {identifier}: Generating photo at {resolution} resolution")
     try:
         response = client.images.generate(
-            model="dall-e-3",
             prompt=description,
             size=resolution,
             quality=image_quality,
