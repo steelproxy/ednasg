@@ -13,6 +13,7 @@ def search_querytime():
     message_win.clear_buffer()
     message_win.print_msg("Searching by query/time...")
     message_win.print_msg("Hint: You can search for any keyword, within any specified time range. ex: \"news\",\"6mo\" or leave blank for any.")
+    message_win.print_msg("Hint: If you want to search for news within a certain radius of an area use as such: \"within 10 miles of Kent, OH\".")
     query = bgetstr("Please enter your query: ")
     message_win.print_msg(f"Query: {query}")
     timespan = bgetstr("Time before: ")
