@@ -29,10 +29,16 @@ def main(stdscr):
 
         # Get article content
         selected_articles = _get_article_content(feeds)
+        scraped_articles = _scrape_articles(selected_articles)
 
         # Generate and display script
-        script = _generate_script(client, selected_articles)
-        news_script.display_scrollable_script(script)
+        while True:
+            script = _generate_script(client, scraped_articles)
+            approval = news_script.display_scrollable_script(script)
+            if(approval == 'q'):
+                break
+
+
         news_script.save_script_to_file(script)
 
         # DALL-E generation
@@ -118,17 +124,7 @@ def _get_article_content(feeds):
         if rss_url is None:  # User chose manual input
             return articles.get_manual_article()
 
-
-def _generate_script(client, selected_articles):
-    """Generate news script from selected articles.
-    
-    Args:
-        client: OpenAI client instance
-        selected_articles: List of articles to generate script from
-        
-    Raises:
-        Exception: If script generation fails
-    """
+def _scrape_articles(selected_articles):
     clear_buffer()
     print_msg("HINT: if you have manually inputted an article, just hit enter.")
     print_msg("There are multiple ways to use the content from your selected articles. They both have their pros and cons.")
@@ -153,7 +149,20 @@ def _generate_script(client, selected_articles):
             case _:
                 bottom_win.print("Invalid selection!")
                 time.sleep(2)
+    return selected_articles
             
+
+def _generate_script(client, selected_articles):
+    """Generate news script from selected articles.
+    
+    Args:
+        client: OpenAI client instance
+        selected_articles: List of articles to generate script from
+        
+    Raises:
+        Exception: If script generation fails
+    """
+    custom_prompt = ""
     clear_buffer()
     print_msg("Your script will be generated using a prompt to ChatGPT.")
     print_msg("You can enter a custom prompt to use, or leave it blank to use the default prompt.")
@@ -166,7 +175,6 @@ def _generate_script(client, selected_articles):
             _export_articles(selected_articles)
             continue
         elif choice in ["n", ""]:
-            custom_prompt = news_script.DEFAULT_GPT_PROMPT
             break
         elif choice == "y":
             custom_prompt = get_multiline_input(

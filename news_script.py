@@ -39,7 +39,7 @@ def display_scrollable_script(script):
     wrapped_lines = _wrap_text(script, max_x)
     
     while True:
-        bottom_win.print("Use UP/DOWN keys or mouse wheel to scroll, 'q' to quit.")
+        bottom_win.print("Use UP/DOWN keys or mouse wheel to scroll, 'q' to quit, 'r' to return.")
         _display_script(script, script_scroll_idx)
         
         ch = bottom_win.getch()
@@ -54,7 +54,9 @@ def display_scrollable_script(script):
                 continue
                 
         if ch == ord('q'):
-            break
+            return 'q'
+        elif ch == ord('r'):
+            return 'r'
             
         script_scroll_idx = _handle_scroll_input(ch, script_scroll_idx, wrapped_lines)
 

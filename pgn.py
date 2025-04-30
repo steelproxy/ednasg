@@ -69,8 +69,8 @@ def pgn_search():
     message_win.print_msg("4: Query/Time (eg. 'london' '6mo')")
 
     while True:
-        selection = bgetstr("Enter search method: ")
-        if selection not in ["1", "2", "3", "4"]:
+        selection = bgetstr("Enter search method [q to return to main menu]: ")
+        if selection not in ["1", "2", "3", "4", "q"]:
             bottom_win.print("Invalid selection! Please try again...")
             sleep(2)
         else:
@@ -88,6 +88,8 @@ def pgn_search():
         
         case "4":
             return search_querytime()
+        case "q":
+            return False
 
 #def link(uri, label=None):
 #    if label is None: 

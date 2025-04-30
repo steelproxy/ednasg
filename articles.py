@@ -48,7 +48,7 @@ def _display_articles(articles, start_idx, url_visible=False):
     max_width = width - 2
 
     message_win.erase()
-    message_win.print("Available Articles [Input as comma-separated numbers] ['/' to search, '?' to view urls]:")
+    message_win.print("Available Articles [Input as comma-separated numbers] ['/' to search, '?' to view urls, 'q' to return]:")
     
     for idx, line_number in _get_visible_articles(articles, start_idx, max_lines):
         article = articles[idx]
@@ -59,6 +59,7 @@ def _display_articles(articles, start_idx, url_visible=False):
             message_win.print(f"({date_str}) {idx + 1}. {title}")
         except curses.error:
             pass
+
 # Input Functions
 def _get_article_title():
     """Get article title from user."""
@@ -148,9 +149,14 @@ def _select_articles(articles):
         view_url = not view_url
         return None
     
+    def return_callback():
+        return "q"
+    
     if not filtered_articles:
         resize_callback()
         filtered_articles = pgn_search()
+        if(isinstance(filtered_articles, bool)):
+            return None
         articles = filtered_articles
         if not articles:
             _handle_no_articles()
@@ -165,9 +171,12 @@ def _select_articles(articles):
             curses.KEY_UP: (scroll_up, "Scroll up"),
             curses.KEY_RESIZE: (resize_callback, "Resize"),
             ord('/'): (search_callback, "Search"),  # New: Add search hotkey
-            ord('?'): (view_url_callback, "url callback")
+            ord('?'): (view_url_callback, "url callback"),
+            ord('q'): (return_callback, "return callback")
         }
     )
+    if choices == "q":
+        return None
     
     selected_indices = _parse_article_selection(choices, len(filtered_articles))  # Changed: Use filtered_articles length
     if not selected_indices:
