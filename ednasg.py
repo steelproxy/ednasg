@@ -12,6 +12,7 @@ import api_keyring
 import time
 import scrape
 import dalle
+import os
 from message_win import print_msg
 from message_win import clear_buffer
 from message_win import get_multiline_input
@@ -198,10 +199,16 @@ def _generate_script(client, selected_articles):
 def _export_articles(selected_articles):
     """Export articles to a file."""
     saved_buffer = swap_buffer([])
+    print_msg("If you would like to save your exported articles to a custom filename feel free to enter it now.")
+    print_msg("You can enter a relative filename (ex. \"todays_articles.txt\") and it will save within the working directory of the program.")
+    print_msg(f"Current working directory: {os.getcwd()}")
+    print_msg("Or if you wish you can enter an absolute path (ex. \"~/Desktop/todays_articles.txt\").")
+    print_msg(f"If you would like to save to the default location ({os.getcwd()}/articles_export.txt) simply hit enter.")
+    filename = bottom_win.bgetstr("Enter filename [\"articles_export.txt\"]: ") or 'articles_export.txt'
     print_msg("Exporting articles...")
     for article in selected_articles:
         try:
-            with open('articles_export.txt', 'a', encoding='utf-8', errors='ignore') as f:
+            with open(filename, 'a', encoding='utf-8', errors='ignore') as f:
                 f.write(f"- {article['title']}\n")
                 f.write(f"Link: {utils.sanitize_output(article['url'])}\n")
                 f.write("\n")
