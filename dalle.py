@@ -7,6 +7,7 @@ import utils
 import aiohttp
 import asyncio
 import utils
+from openai import AsyncOpenAI
 
 CHATGPT_ROLE = """You are a helpful assistant that analyzes a generated 99-second social media news script to write multiple safe, vivid image descriptions for the DALL·E 3 API.
 
@@ -35,7 +36,10 @@ async def _generate_single_image(client, description, identifier, resolution, im
 
         print_msg(f"photo {identifier}: Generating photo at {resolution} resolution")
         try:
-            response = client.images.generate(
+            # Create an async client from the existing client's API key
+            async_client = AsyncOpenAI(api_key=client.api_key)
+            
+            response = await async_client.images.generate(
                 model="dall-e-3",
                 prompt=description,
                 size=resolution,
