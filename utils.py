@@ -236,7 +236,7 @@ def _fatal_error(message):
         message: The error message to display
     """
     message_win.clear()
-    message_win.print(message)
+    message_win.print(message, wrap=True)
     wait_for_exit()
     _handle_exit()
 
