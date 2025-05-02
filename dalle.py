@@ -1,12 +1,13 @@
 import openai
 import bottom_win
-import requests
 from message_win import clear_buffer
-from message_win import print_msg
+from message_win import print_msg, print_buffer
 import utils
 import aiohttp
 import asyncio
 import utils
+import curses
+from screen_manager import handle_resize
 from openai import AsyncOpenAI
 
 CHATGPT_ROLE = """You are a helpful assistant that analyzes a generated 99-second social media news script to write multiple safe, vivid image descriptions for the DALL·E 3 API.
@@ -102,26 +103,59 @@ def generate_photos(client, script, num_images=3, image_quality="standard", reso
         utils.pause()
         return
 
-    bottom_win.print("DALLE-3 Generating Images...")
+    bottom_win.print("DALLE-3 Generating Images... (Press 'q' to cancel)")
     
-    # Create and run async tasks
-    async def run_tasks():
-        tasks = [
-            _generate_single_image(
-                client, 
-                description, 
-                i, 
-                resolution, 
-                image_quality
-            )
-            for i, description in enumerate(dalle_descriptions[:num_images])
-        ]
-        await asyncio.gather(*tasks)
-
-    # Run the async tasks properly
-    asyncio.run(run_tasks())
-
-    bottom_win.bgetstr("DALLE-3 photo generation finished. Press enter to exit...")
+    # Create the event loop
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    # Create tasks for each image generation
+    tasks = [
+        _generate_single_image(
+            client, 
+            description, 
+            i, 
+            resolution, 
+            image_quality
+        )
+        for i, description in enumerate(dalle_descriptions[:num_images])
+    ]
+    
+    # Create a future that will be done when all tasks are complete
+    all_tasks = asyncio.gather(*tasks)
+    
+    # Make getch non-blocking
+    bottom_win.win.nodelay(True)
+    
+    # Run the event loop in a non-blocking way
+    while not all_tasks.done():
+        # Do other work here while waiting for tasks to complete
+        # For example, you could update a progress bar, check for user input, etc.
+        # Run the event loop for a short time to allow tasks to progress
+        loop.run_until_complete(asyncio.sleep(0.1))
+        
+        # Check for user input to cancel (non-blocking)
+        try:
+            ch = bottom_win.win.getch()
+            if ch == ord('q'):
+                print_msg("Cancelling image generation...")
+                all_tasks.cancel()
+                break
+            elif ch == curses.KEY_RESIZE:
+                handle_resize()
+                print_buffer()
+                bottom_win.print("DALLE-3 Generating Images... (Press 'q' to cancel)")
+        except curses.error:
+            pass  # No input available
+    
+    # Restore normal getch behavior
+    bottom_win.win.nodelay(False)
+    
+    # Clean up
+    loop.close()
+    
+    if not all_tasks.cancelled():
+        bottom_win.handle_input("DALLE-3 photo generation finished. Press enter to exit...", print_buffer, None, {10: (None, "break")}, True)
 
 def _description_regenerate(client, description):
     print_msg(f"recreating bad description: \"{description}\".")
