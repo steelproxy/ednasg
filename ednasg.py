@@ -17,6 +17,8 @@ from message_win import print_msg
 from message_win import clear_buffer
 from message_win import get_multiline_input
 from message_win import swap_buffer
+from message_win import print_buffer
+from bottom_win import handle_input
 from bottom_win import bgetstr
 
 def main(stdscr):
@@ -290,9 +292,7 @@ def _dalle_prompt(client, script):
 def _display_welcome_message():
     """Display welcome message and wait for user input."""
     print_msg("Welcome to ednasg!")
-    bottom_win.print("Press any button to continue...")
-    if bottom_win.getch() == curses.KEY_RESIZE:
-        screen_manager.handle_resize()
+    handle_input("Press enter to continue...", print_buffer, None, {ord('\n'): (None, 'break')}, True)
     clear_buffer()
 
 
