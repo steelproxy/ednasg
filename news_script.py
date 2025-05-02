@@ -21,8 +21,7 @@ def get_script(client, articles, custom_prompt):      # Generate news script usi
         )
     except Exception as e:
         utils.handle_openai_error(e, "GPT API call")
-        utils.pause()
-        return
+        raise
 
     if not hasattr(response, 'choices') or not response.choices:          # Check response format
         raise ValueError("API response does not contain 'choices'")
