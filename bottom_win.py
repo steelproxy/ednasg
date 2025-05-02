@@ -24,7 +24,7 @@ def print(message):
         return
 
 
-def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None):
+def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None, ch_mode=False):
     """Generic input handler with scrolling, cursor support, and custom hotkeys.
     
     Args:
@@ -33,6 +33,7 @@ def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None):
         max_input_len: Optional maximum input length
         hotkeys: Optional dict of {key: (function, description)} for special keys
                 Example: {SKIP_HOTKEY: (lambda: None, "Skip")}
+        ch_mode: Do not record or print any input, only listen for hotkeys.
     """
     
     # Initialize input and cursor position
@@ -103,15 +104,15 @@ def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None):
             continue
 
         match ch: # Handle input
-            case _ if ch == ord('\n'):
+            case _ if ch == ord('\n') and not ch_mode:
                 break
-            case _ if ch in utils.BACKSPACE_KEYS and cursor_pos > 0:
+            case _ if ch in utils.BACKSPACE_KEYS and cursor_pos > 0 and not ch_mode:
                 input_str = (input_str[:cursor_pos - 1] + 
                             input_str[cursor_pos:])
                 cursor_pos -= 1
-            case _ if ch in utils.ARROW_LEFT and cursor_pos > 0:
+            case _ if ch in utils.ARROW_LEFT and cursor_pos > 0 and not ch_mode:
                 cursor_pos -= 1
-            case _ if ch in utils.ARROW_RIGHT and cursor_pos < len(input_str):
+            case _ if ch in utils.ARROW_RIGHT and cursor_pos < len(input_str) and not ch_mode:
                 cursor_pos += 1
             case curses.KEY_RESIZE:
                 max_y, max_x = screen_manager.handle_resize()
@@ -120,7 +121,7 @@ def handle_input(prompt, callback=None, max_input_len=None, hotkeys=None):
                 else:
                     prompt = original_prompt
                 continue
-            case _ if 32 <= ch <= 126:
+            case _ if 32 <= ch <= 126 and not ch_mode:
                 if not max_input_len or len(input_str) < max_input_len:
                     input_str = (input_str[:cursor_pos] + 
                                 chr(ch) + 
