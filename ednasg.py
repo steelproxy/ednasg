@@ -13,6 +13,8 @@ import time
 import scrape
 import dalle
 import os
+import engagement
+import json
 from message_win import print_msg
 from message_win import clear_buffer
 from message_win import get_multiline_input
@@ -41,7 +43,7 @@ def main(stdscr):
             if(approval == 'q'):
                 break
 
-
+        _engagement_prompt(client, script)
         news_script.save_script_to_file(script)
 
         # DALL-E generation
@@ -167,12 +169,12 @@ def _generate_script(client, selected_articles):
     """
     custom_prompt = ""
     clear_buffer()
-    print_msg("Your script will be generated using a prompt to ChatGPT.")
-    print_msg("You can enter a custom prompt to use, or leave it blank to use the default prompt.")
-    print_msg(f"The default prompt is: {news_script.DEFAULT_GPT_PROMPT}")
-    print_msg("If you would like to use the default prompt, just press enter. Otherwise, answer 'y' to the prompt below.")
-    print_msg("If you would like to export the articles, answer 'e' to the prompt below.")
     while True:
+        print_msg("Your script will be generated using a prompt to ChatGPT.")
+        print_msg("You can enter a custom prompt to use, or leave it blank to use the default prompt.")
+        print_msg(f"The default prompt is: {news_script.DEFAULT_GPT_PROMPT}")
+        print_msg("If you would like to use the default prompt, just press enter. Otherwise, answer 'y' to the prompt below.")
+        print_msg("If you would like to export the articles, answer 'e' to the prompt below.")
         choice = bgetstr("Would you like to make a custom prompt? (y/n/e) [n]: ")
         if choice == "e":
             _export_articles(selected_articles)
@@ -197,10 +199,39 @@ def _generate_script(client, selected_articles):
     except Exception as e:
         utils._fatal_error(
             f"Unable to generate news script! caught exception: {str(e)}")
+        
+def _engagement_prompt(client,script):
+    clear_buffer()
+    print_msg("BETA: ednasg now supports content scoring, meaning that the script will be analyzed and scored on a few parameters.")
+    print_msg("This information can be saved with the news script to use for training purposes later.")
+    print_msg("These features are still being implemented.")
+    print_msg("It will be scored on these parameters: ")
+    parameters = ["- Hook Strength (1-5)",
+                  "- Overall Sentiment (Positive/Neutral/Negative)",
+                  "- Clarity (1-5)",
+                  "- Tone Consistency (1-5)",
+                  "- Tone (Casual/Formal/Serious/etc.)",
+                  "- Emotional Trigger (if any)"]
+    def ayes_callback(): # dirty stuff here
+        return 'y'
+    for str in parameters:
+        print_msg(str)
+    choice = handle_input("Would you like to score your script? (y/n)", print_buffer, 1, 
+                          {ord('y'): (ayes_callback, "go ahead"),
+                           ord('n'): (None, "break"),}
+                          , True)
+    if not choice:
+        return
+
+    result = engagement.gpt_scoring(client, script)
+    news_script.display_scrollable_script(json.dumps(result))
+
+
+
 
 def _export_articles(selected_articles):
     """Export articles to a file."""
-    saved_buffer = swap_buffer([])
+    clear_buffer()
     print_msg("If you would like to save your exported articles to a custom filename feel free to enter it now.")
     print_msg("You can enter a relative filename (ex. \"todays_articles.txt\") and it will save within the working directory of the program.")
     print_msg(f"Current working directory: {os.getcwd()}")
@@ -220,7 +251,6 @@ def _export_articles(selected_articles):
             return
     print_msg("Articles exported successfully!")
     bottom_win.bgetstr("Press any button to continue...")
-    swap_buffer(saved_buffer)
 
 def _dalle_prompt(client, script):
     clear_buffer()
